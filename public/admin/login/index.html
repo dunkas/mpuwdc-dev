@@ -15,4 +15,4 @@ window.addEventListener('mpu-cloud-ready',async()=>{
  }catch(e){msg.textContent=e.message}
 });
 loginForm.onsubmit=async e=>{e.preventDefault();msg.textContent='Sending…';try{await MPUCloud.signInEmailLink(email.value.trim());msg.innerHTML='<span class="success">Secure sign-in link sent. Open the link from your email.</span>'}catch(err){msg.innerHTML='<span class="danger">'+err.message+'</span>'}};
-</script></body></html>
+</script><script defer src="/assets/section-navigation.js"></script></body></html>

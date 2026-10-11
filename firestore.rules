@@ -4,10 +4,10 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function email() { return signedIn() && request.auth.token.email != null ? request.auth.token.email : ''; }
     // One-time bootstrap identity sourced from the supplied legacy EC directory.
-    function isBootstrapChairman() { return signedIn() && email() == 'dunkas@gmail.com'; }
+    function isBootstrapChairman() { return signedIn() && request.auth.token.get('email_verified',false) == true && email() == 'dunkas@gmail.com'; }
     function userDoc() { return /databases/$(database)/documents/users/$(request.auth.uid); }
     function hasUserDoc() { return signedIn() && exists(userDoc()); }
-    function role() { return hasUserDoc() ? get(userDoc()).data.role : (isBootstrapChairman() ? 'chairman' : null); }
+    function role() { return signedIn() && request.auth.token.get('email_verified',false) == true ? (hasUserDoc() ? get(userDoc()).data.role : (isBootstrapChairman() ? 'chairman' : '')) : ''; }
     function isAdmin() { return role() in ['chairman','admin']; }
     function isEC() { return role() in ['chairman','admin','ec','secretary','voter_register','screening','communications']; }
     function isFinance() { return role() in ['chairman','admin','finance']; }
@@ -35,18 +35,37 @@ service cloud.firestore {
     }
 
     match /members/{memberId} {
-      allow read: if signedIn() && (isVoterRole() || isFinance() || resource.data.email == email());
-      allow create, update, delete: if isVoterRole() || isAdmin();
+      allow read: if signedIn() && (isVoterRole() || isFinance() || (request.auth.token.email_verified == true && resource.data.email == email()));
+      allow create, delete: if isVoterRole() || isAdmin();
+      allow update: if isVoterRole() || isAdmin() || (isFinance() && (!('id' in request.resource.data) || request.resource.data.id == memberId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['id','lastQualifyingPaymentDate','amountOwed','creditBalance','financialStatus','financeInitialized','financePaymentDates','financeBaselineQualifyingDate','updatedAt','updatedBy']));
+    }
+    match /lgas/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    match /attendance/{id} {
+      allow read: if signedIn() && (isVoterRole() || (request.auth.token.email_verified == true && resource.data.email == email()));
+      allow create, update, delete: if isVoterRole();
     }
     match /registerCorrections/{id} {
-      allow create: if signedIn() && request.resource.data.userEmail == email();
+      allow create: if signedIn() && request.auth.token.email_verified == true && request.resource.data.userEmail == email() && request.resource.data.userUid == request.auth.uid && request.resource.data.status == 'New' && request.resource.data.details is string && request.resource.data.details.size() > 0 && request.resource.data.details.size() <= 5000 && request.resource.data.get('contactPhone','') is string && request.resource.data.get('contactPhone','').size() <= 40;
       allow read: if signedIn() && (isVoterRole() || resource.data.userEmail == email());
       allow update: if isVoterRole(); allow delete: if isAdmin();
     }
+    function confirmedPayment() {
+      return request.resource.data.verificationStatus != 'Verified'
+        || (request.resource.data.get('receivedConfirmed', false) == true
+          && request.resource.data.get('verifiedBy', '') == email()
+          && request.resource.data.get('matchedBy', '') == email());
+    }
     match /payments/{paymentId} {
-      allow create: if signedIn();
-      allow read: if signedIn() && (resource.data.userUid == request.auth.uid || resource.data.email == email() || isFinance());
-      allow update: if isFinance(); allow delete: if isAdmin();
+      allow create: if isFinance() && confirmedPayment();
+      allow read: if signedIn() && (isFinance() || (request.auth.token.email_verified == true && (resource.data.userUid == request.auth.uid || resource.data.email == email())));
+      allow update: if isFinance() && (confirmedPayment()
+        || (resource.data.verificationStatus == 'Verified'
+          && request.resource.data.verificationStatus == 'Verified'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['balanceAppliedCents','updatedAt','updatedBy'])));
+      allow delete: if isAdmin();
     }
     match /financeConfig/{docId} { allow read, write: if isFinance(); }
     match /duesObligations/{id} { allow read: if isFinance() || isVoterRole(); allow create, update: if isFinance() || isAdmin(); allow delete: if isAdmin(); }
@@ -60,6 +79,24 @@ service cloud.firestore {
     match /nominations/{doc=**} { allow read, write: if isCandidateRole(); }
     match /memberVerification/{doc=**} { allow read, write: if isCandidateRole() || isVoterRole(); }
     match /candidateAcceptance/{doc=**} { allow read, write: if isCandidateRole(); }
+    match /educationProgress/{uid}/modules/{moduleId} {
+      allow read: if signedIn() && (isEC() || (request.auth.uid == uid && request.auth.token.email_verified == true));
+      allow create, update: if signedIn() && request.auth.uid == uid && request.auth.token.email_verified == true
+        && moduleId in ['day1','day2','day3','day4','final']
+        && request.resource.data.keys().hasOnly(['moduleId','title','answers','completed','gradedQuestions','correctAnswers','totalQuestions','updatedAt','uid','email','participantName','lga'])
+        && request.resource.data.uid == uid && request.resource.data.email == email()
+        && request.resource.data.moduleId == moduleId
+        && request.resource.data.title is string && request.resource.data.title.size() <= 150
+        && request.resource.data.participantName is string && request.resource.data.participantName.size() > 0 && request.resource.data.participantName.size() <= 150
+        && request.resource.data.lga in ['Aboh Mbaise','Ahiazu Mbaise','Ezinihitte Mbaise']
+        && request.resource.data.answers is list && request.resource.data.answers.size() <= 20
+        && request.resource.data.completed is bool
+        && request.resource.data.totalQuestions is int && request.resource.data.totalQuestions == request.resource.data.answers.size()
+        && request.resource.data.gradedQuestions is int && request.resource.data.gradedQuestions >= 0 && request.resource.data.gradedQuestions <= request.resource.data.totalQuestions
+        && request.resource.data.correctAnswers is int && request.resource.data.correctAnswers >= 0 && request.resource.data.correctAnswers <= request.resource.data.gradedQuestions
+        && request.resource.data.updatedAt is string && request.resource.data.updatedAt.size() <= 40;
+      allow delete: if isAdmin();
+    }
     match /educationParticipants/{doc=**} { allow read, write: if isEC(); }
     match /educationResults/{doc=**} { allow read, write: if isEC(); }
     match /crashCourseResults/{doc=**} { allow read, write: if isEC(); }
@@ -70,6 +107,38 @@ service cloud.firestore {
     match /legacyNotifications/{doc=**} { allow read, write: if isAdmin(); }
     match /legacyAudit/{doc=**} { allow read, write: if isAdmin(); }
 
+    function isInboxStaff() { return role() in ['chairman','admin','ec','secretary','communications','screening']; }
+    match /ecRequests/{id} {
+      allow get: if signedIn() && (request.auth.token.email_verified == true || request.auth.token.firebase.sign_in_provider == 'anonymous') && !exists(/databases/$(database)/documents/ecRequests/$(id));
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['anonymous','id','type','senderUid','senderEmail','senderName','senderPhone','nomineePhone','message','nomineeName','nomineeEmail','office','candidateAction','reference','status','createdAt'])
+        && request.resource.data.id == id
+        && request.resource.data.senderUid == request.auth.uid
+        && request.resource.data.get('anonymous',false) is bool
+        && ((request.auth.token.email_verified == true && request.resource.data.senderEmail == email() && request.resource.data.get('anonymous',false) == false)
+          || (request.auth.token.firebase.sign_in_provider == 'anonymous' && request.resource.data.get('anonymous',false) == true && request.resource.data.type == 'incident' && request.resource.data.senderEmail == '' && request.resource.data.senderName == 'Anonymous'))
+        && request.resource.data.type in ['question','help','incident','nominate','self','access']
+        && request.resource.data.status == 'New'
+        && request.resource.data.senderName is string && request.resource.data.senderName.size() > 0 && request.resource.data.senderName.size() <= 150
+        && request.resource.data.get('senderPhone','') is string && request.resource.data.get('senderPhone','').size() <= 40
+        && request.resource.data.get('nomineePhone','') is string && request.resource.data.get('nomineePhone','').size() <= 40
+        && request.resource.data.message is string && request.resource.data.message.size() >= 10 && request.resource.data.message.size() <= 5000
+        && request.resource.data.nomineeName is string && request.resource.data.nomineeName.size() <= 150
+        && request.resource.data.nomineeEmail is string && request.resource.data.nomineeEmail.size() <= 254
+        && request.resource.data.office is string && request.resource.data.office.size() <= 150
+        && request.resource.data.reference is string && request.resource.data.reference.size() <= 150
+        && request.resource.data.createdAt is string && request.resource.data.createdAt.size() <= 40
+        && request.resource.data.candidateAction in ['', 'Check status', 'Accept nomination', 'Decline nomination', 'Update information', 'Withdraw']
+        && (request.resource.data.type != 'nominate' || (request.resource.data.nomineeName.size() > 0 && request.resource.data.nomineeEmail.size() > 0))
+        && (!(request.resource.data.type in ['nominate','self']) || request.resource.data.office.size() > 0);
+      allow read: if signedIn() && (isInboxStaff() || resource.data.senderUid == request.auth.uid);
+      allow update: if isInboxStaff()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','response','respondedAt','respondedBy'])
+        && request.resource.data.status in ['New','Under Review','Answered','Closed']
+        && request.resource.data.response is string && request.resource.data.response.size() <= 5000
+        && request.resource.data.respondedBy == email();
+      allow delete: if isAdmin();
+    }
     match /incidents/{doc=**} { allow create: if signedIn(); allow read, update: if role() in ['chairman','admin','secretary']; }
     match /documents/{docId} { allow read: if resource.data.visibility == 'Public' || isEC(); allow create, update, delete: if role() in ['chairman','admin','secretary']; }
     match /auditLog/{id} { allow create: if signedIn() && (isEC() || isFinance()); allow read: if role() in ['chairman','admin','secretary']; allow update, delete: if false; }

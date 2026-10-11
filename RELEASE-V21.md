@@ -1,0 +1,30 @@
+# MPU V21 dev release — October 11, 2026
+
+Target: https://mpuwdc-dev.web.app (development project only). Previous portal and Firestore deployment succeeded. This release restores Financial Portal / Finance Team access, optional contact phones, private anonymous incident reporting, editable official calendar, local V21 education, Admin documents and section return navigation.
+
+## Release and rollback procedure
+
+Before every deployment: run relevant checks, commit all release source in Git, create a dated source ZIP and a ZIP of the existing deployed Hosting version, and record their SHA-256 hashes with the commit ID. Do not include credentials, environment files, node_modules, or logs. Keep source and previously deployed site backups outside the checkout in /workspace/mpu-deliverables. Deploy the exact committed source. Record the result in the release manifest after deployment.
+
+```sh
+firebase deploy --project mpuwdc-dev --only hosting,firestore:rules,firestore:indexes
+```
+
+Use Node 20 and firebase-tools 14.22.0. Functions and outbound email are not deployed. Restore an earlier Hosting release through Firebase release history or deploy its archived public files. Restore rules/indexes from the corresponding earlier Git commit; Hosting rollback alone does not roll back database security or data.
+
+## Included
+
+- Private member balance, verified payments, attendance and status; Finance Team payment reconciliation with Financial Secretary confirmation of Zelle receipts.
+- Native nomination and Contact EC requests with optional sender/nominee phones, staff inbox and private in-app replies. Anonymous incident reports use a separate anonymous identity; phone remains voluntary.
+- All 15 official FINAL v2 timetable events imported into previously empty live calendar. Staff can edit dates and descriptions or import official entries without deleting other events.
+- V21 rules and 18 printable appendix sections; original draft/sample labels retained.
+- Local four-day education journey and final practice challenge, V21 crash course, private saved member progress and staff progress review. All section resources return to Education/Admin/Finance as appropriate.
+- Constitutional Questions: 38 EC review questions derived from the compliance checklist and 5 exact original Day 1 questions, available as Word and 8-page PDF. These are review questions, not newly adopted rules or an answer key.
+
+## Verification and limits
+
+Local rules checks cover 43 privacy/validation cases. Actual emulator Auth/Firestore flows passed 17 checks including optional phones, anonymous reporting, persistent learning, calendar editing and corrections. Portal navigation and learning checks exercise all document links. Live HTTP checks confirm published artifacts; full live member/staff sign-in has not been exercised by this session.
+
+The original education Apps Script exposes its page but keeps the randomized question bank and answer keys server-side. Five Day 1 questions were recovered from the supplied public Google Form; their undisclosed answers remain ungraded. Other practice questions use explicit V21 citations. Supply the Apps Script server source/question bank to reproduce the exact remaining original quizzes.
+
+Outstanding: private signed-photo upload, full structured candidate acceptance/verification/state transitions, outbound notification email if required, real staff/member/LGA access review, and resolution of the source timetable signature date 10/7/2027. Current candidate buttons submit EC requests; practice scores do not establish eligibility.

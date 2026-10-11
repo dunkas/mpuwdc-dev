@@ -1,0 +1,19 @@
+{
+  "name": "mpu-member-account-tests",
+  "private": true,
+  "scripts": {
+    "test:rules": "cd ../.. && node tests/member-account/rules.cjs",
+    "test:browser": "cd ../.. && node tests/member-account/browser.cjs",
+    "test:flow": "cd ../.. && node tests/member-account/live-browser.cjs",
+    "test:staff": "cd ../.. && node tests/member-account/staff-flow.cjs",
+    "test:ec": "cd ../.. && node tests/member-account/ec-flow.cjs",
+    "test:navigation": "cd ../.. && node tests/member-account/navigation.cjs",
+    "test:v21": "cd ../.. && node tests/member-account/v21-forms.cjs",
+    "test:portal": "cd ../.. && node tests/member-account/portal-health.cjs"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "5.0.0",
+    "firebase": "12.10.0",
+    "playwright-core": "1.56.1"
+  }
+}

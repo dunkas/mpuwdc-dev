@@ -6,6 +6,7 @@
   <title>MPU 2026 ELECTION Portal</title>
   <link rel="icon" href="/assets/mpu-logo.png">
   <link rel="stylesheet" href="/assets/styles.css?v=build10">
+  <link rel="stylesheet" href="/assets/ec-actions.css">
 </head>
 <body class="portal-home">
 <header class="top home-top">
@@ -19,7 +20,8 @@
     </div>
     <nav class="nav home-nav" aria-label="Portal navigation">
       <a class="active" href="/">⌂ <span>Home</span></a>
-      <a href="/payment/">▣ <span>MPU Payment</span></a>
+      <a href="/member-account/">▣ <span>My Member Account</span></a>
+      <a href="/finance/">▣ <span>Financial Portal</span></a>
       <a href="/voter-education/">▤ <span>Voter Education</span></a>
       <a href="/admin/">⚙ <span>EC Admin</span></a>
     </nav>
@@ -76,7 +78,7 @@
       <div class="action-copy">
         <h3>Nominate Another Member</h3>
         <p>Submit a nomination for an eligible MPU member.</p>
-        <button class="btn primary action-btn" onclick="goConfigured('candidatePortalUrl', MPU_CONFIG.legacyPortalUrl)">Start Nomination <span>→</span></button>
+        <button class="btn primary action-btn" type="button" data-candidate="nominate">Start Nomination <span>→</span></button>
       </div>
     </article>
 
@@ -85,7 +87,7 @@
       <div class="action-copy">
         <h3>Enter as a Candidate</h3>
         <p>Self-nominate and begin your candidate entry for the 2026 election.</p>
-        <button class="btn primary action-btn" onclick="goConfigured('candidatePortalUrl', MPU_CONFIG.legacyPortalUrl)">Self-Nominate <span>→</span></button>
+        <button class="btn primary action-btn" type="button" data-candidate="self">Self-Nominate <span>→</span></button>
       </div>
     </article>
 
@@ -94,18 +96,20 @@
       <div class="action-copy">
         <h3>Candidate Access</h3>
         <p>Accept or decline a nomination, complete information, check status, or withdraw.</p>
-        <button class="btn primary action-btn" onclick="goConfigured('candidatePortalUrl', MPU_CONFIG.legacyPortalUrl)">Candidate Access <span>→</span></button>
+        <button class="btn primary action-btn" type="button" data-candidate="access">Candidate Access <span>→</span></button>
       </div>
     </article>
   </section>
+  <section class="section ec-action-panel" id="candidateInline" hidden aria-label="Candidate request form"></section>
 
-  <section class="home-secondary-grid" aria-label="Payment and support">
+
+  <section class="home-secondary-grid" aria-label="Member services and support">
     <article class="home-action-card payment-feature" id="paymentCard">
       <div class="round-icon gold">▣</div>
       <div class="action-copy">
-        <h3>MPU Payment</h3>
-        <p>Payment instructions and verification for Zelle, cash and check records.</p>
-        <a class="btn gold action-btn" href="/payment/">Pay / Verify <span>→</span></a>
+        <h3>My Member Account</h3>
+        <p>Check your balance, payment history, attendance, and membership status.</p>
+        <a class="btn gold action-btn" href="/member-account/">My Member Account <span>→</span></a><a class="btn ghost" href="/finance/">Financial Portal / Finance Team</a>
       </div>
     </article>
 
@@ -133,9 +137,9 @@
       </div>
       <p>Every candidate must submit a clear photo of the handwritten declaration. A clear signed plain-paper submission is accepted when it includes the required information. Eligibility remains subject to EC verification.</p>
       <div class="strip-actions">
-        <a class="btn strip-ghost" href="/voter-education/#rules">▤ Read 2026 Election Rules</a>
-        <a class="btn primary" href="/voter-education/submission-guidance/#sample">▤ See Handwritten Sample</a>
-        <button class="btn gold" type="button" onclick="goConfigured('candidatePortalUrl', MPU_CONFIG.legacyPortalUrl)">▣ Submit Signed Photo</button>
+        <a class="btn strip-ghost" href="/voter-education/submission-guidance/">▤ How to Submit</a>
+        <a class="btn primary" href="/voter-education/handwritten-sample/">▤ See Handwritten Sample</a>
+        <a class="btn gold" href="/documents/plain-paper-candidate-template/">▣ View / Print Blank Template</a>
       </div>
     </div>
   </section>
@@ -169,9 +173,9 @@
       const url=cur.actionUrl||'/event-calendar/';
       const label=cur.actionLabel||(cur.phaseType==='register-review'?'Check My Record':'View Details');
       $('phaseActions').innerHTML=`<a class="btn ${cur.phaseType==='register-review'?'gold':'primary'}" href="${R.esc(url)}">${R.esc(label)}</a>`;
-    }
+    }else{ $('phaseTitle').textContent='No published events';$('phaseDesc').textContent='The EC will publish upcoming dates here.';$('phaseDate').textContent='';$('daysCount').textContent='—';$('phaseActions').replaceChildren();}
 
-    const events=R.getEvents().filter(x=>x.published!==false);
+    const events=R.publishedEvents();
     const nowIdx=Math.max(0,events.findIndex(e=>phase.current&&e.id===phase.current.id));
     const visible=events.slice(nowIdx,Math.min(events.length,nowIdx+5));
     $('timelineFlow').innerHTML=visible.map((e,i)=>timelineNode(i===0?'CURRENT':i===1?'NEXT':'UPCOMING',e,i===0?'current':'')).join('');
@@ -191,27 +195,7 @@
       $('noticeExpiry').textContent=n.end?'Visible through '+n.end:'';
     }
 
-    const c=s.contact||{};
-    const details=[];
-    if(c.email) details.push(`<div><strong>Email:</strong> ${R.esc(c.email)}</div>`);
-    if(c.phone) details.push(`<div><strong>Phone/Text:</strong> ${R.esc(c.phone)}</div>`);
-    if(c.whatsapp) details.push(`<div><strong>WhatsApp:</strong> ${R.esc(c.whatsapp)}</div>`);
-    if(c.hours) details.push(`<div>${R.esc(c.hours)}</div>`);
-    const fallback=`<div>Use the Electoral Committee's approved communication channel for assistance.</div>`;
 
-    document.querySelectorAll('[data-support]').forEach(btn=>{
-      btn.onclick=()=>{
-        const type=btn.dataset.support;
-        const title=type==='incident'?'Report an Election Incident':type==='help'?'Need Help?':'Ask the Electoral Committee';
-        const intro=type==='incident'
-          ?'Provide a private, factual description of the election concern. Include date, time and relevant details.'
-          :type==='help'
-            ?'For portal, eligibility, nomination or process help, contact the Electoral Committee.'
-            :'Send your question or request for clarification to the Electoral Committee.';
-        $('contactInline').innerHTML=`<div class="contact-panel"><strong>${title}</strong><p>${intro}</p>${details.length?details.join(''):fallback}</div>`;
-        $('contactInline').classList.add('open');
-      };
-    });
   }
 
   render();
@@ -221,11 +205,12 @@
       if(!C.state().enabled)return;
       const [settings,events]=await Promise.all([C.getPortalSettings(),C.getEvents()]);
       if(settings)R.saveSettings(settings);
-      if(events&&events.length)R.saveEvents(events);
+      if(events)R.saveEvents(events.length?events:R.seedEvents);
       render();
     }catch(e){console.warn('Public cloud sync skipped',e)}
   });
 })();
 </script>
-</body>
+<script type="module" src="/assets/ec-actions.js"></script>
+<script defer src="/assets/section-navigation.js"></script></body>
 </html>

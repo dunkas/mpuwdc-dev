@@ -1,6 +1,9 @@
 import '/assets/firebase-client.js?v=build10';
 const allowed=(document.body.dataset.allowedRoles||'chairman,admin').split(',').map(x=>x.trim()).filter(Boolean);
+let checking=false;
 window.addEventListener('mpu-cloud-ready',async()=>{
+  if(checking)return;checking=true;
+  try {
   await MPUCloud.ready();
   const st=MPUCloud.state();
   if(st.enabled && st.user){ try{ await MPUCloud.ensureUserProfile(); }catch(e){ console.warn('Profile check failed',e); } }
@@ -11,4 +14,5 @@ window.addEventListener('mpu-cloud-ready',async()=>{
   MPUCloud.applyRoleVisibility();
   document.querySelectorAll('[data-role-label]').forEach(el=>el.textContent=MPUCloud.role()||'authorized');
   document.querySelectorAll('[data-cloud-status]').forEach(el=>el.textContent=MPUCloud.state().enabled?'Firebase connected':'DEV local preview');
+  } finally {checking=false;}
 });

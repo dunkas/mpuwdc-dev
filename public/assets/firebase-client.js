@@ -41,6 +41,11 @@ async function init(){
     const app = appMod.getApps().length ? appMod.getApp() : appMod.initializeApp(fb);
     const auth = authMod.getAuth(app);
     const db = fsMod.getFirestore(app);
+    // Test-only connections are explicitly configured and restricted to loopback hosts.
+    if (cfg.emulators && ['localhost','127.0.0.1'].includes(location.hostname)) {
+      authMod.connectAuthEmulator(auth, 'http://127.0.0.1:9099', {disableWarnings:true});
+      fsMod.connectFirestoreEmulator(db, '127.0.0.1', 8080);
+    }
     state={...state,enabled:true,auth,db,sdk:{authMod,fsMod},ready:true,configSource};
     await new Promise(resolve=>{
       let first=true;

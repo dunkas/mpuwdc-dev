@@ -4,4 +4,4 @@
 <script src="/config.js?v=build10"></script><script type="module" src="/assets/firebase-client.js?v=build10"></script><script>
 window.addEventListener('mpu-cloud-ready',async()=>{await MPUCloud.ready();if(!MPUCloud.state().enabled){who.textContent='DEV local preview — Firebase not connected.';return;}if(!MPUCloud.state().user){location.replace('/admin/login/');return;}await MPUCloud.ensureUserProfile();who.textContent='Signed in as '+(MPUCloud.state().user.email||'')+' • Role: '+(MPUCloud.role()||'pending');if(MPUCloud.role()!=='pending')location.replace('/admin/');});
 refreshBtn.onclick=()=>location.reload();outBtn.onclick=async()=>{await MPUCloud.signOutUser();location.replace('/admin/login/')};
-</script></body></html>
+</script><script defer src="/assets/section-navigation.js"></script></body></html>

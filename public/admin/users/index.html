@@ -9,4 +9,4 @@ function opts(v){return roles.map(r=>`<option value="${r}" ${r===v?'selected':''
 async function load(){try{if(!MPUCloud.state().enabled){rows.innerHTML='<tr><td colspan="5">Connect Firebase to manage real users. DEV role bypass is interface-only.</td></tr>';return;}const a=await MPUCloud.getUsers();rows.innerHTML=a.map(x=>`<tr><td><b>${esc(x.email||'')}</b><br><small>${esc(x.uid||x.id||'')}</small></td><td>${esc(x.status||'')}</td><td><select id="r-${x.id}">${opts(x.role||'pending')}</select></td><td>${esc(x.lastSignInAt||'')}</td><td><button class="btn small primary" onclick="saveRole('${x.id}')">Save</button></td></tr>`).join('')||'<tr><td colspan="5">No authenticated users yet.</td></tr>'}catch(e){rows.innerHTML='<tr><td colspan="5">'+esc(e.message)+'</td></tr>'}}
 async function saveRole(uid){const role=document.getElementById('r-'+uid).value;await MPUCloud.updateUserAccess(uid,{role,status:role==='pending'?'Pending Approval':'Active'});await load()}
 window.addEventListener('mpu-cloud-ready',load);
-</script></body></html>
+</script><script defer src="/assets/section-navigation.js"></script></body></html>
