@@ -56,3 +56,11 @@ Attendance Center now displays four permanent quarterly slots for each selected 
 Staff may explicitly select an existing calendar event when creating a meeting. Meeting edits atomically update the linked public calendar entry while preserving existing event details and attendance identity. Linked calendar entries return to Attendance Center for password-protected edits; direct client changes are denied. New membership-only events do not replace election phases on the homepage.
 
 Validation: 18 actual-emulator attendance/card integration checks, 15 browser workflow checks (including quarterly date/calendar linking), 49 Firestore privacy/permission checks, 49 finance unit checks, and full portal navigation/calendar health checks passed. Physical scanner/phone checks remain as documented in QR-ATTENDANCE.md.
+
+## Constitution-only questions and Election Day mini guide
+
+The Constitutional Questions HTML, Word and PDF now contain 32 reviewed questions sourced only from the user-uploaded `MPU CONSTITUTION -  9.27.26 corrections.docx`. Each question includes a controlling article/section and verbatim evidence; the original source is downloadable and SHA-256 pinned in the question dataset. Removed unsupported rotation/passing-the-presidency, nomination fee, nominator-count, written nomination procedure, withdrawal, tie-break and inferred appeal-authority prompts. Removed the separate old Google Form appendix from this document. This release does not change the independent education quizzes or operational V21 rules. Source ambiguities and blank ratification fields are explicitly preserved, with no claim of independently verified adoption.
+
+Education opens Election Day Mini Rules instead of Open Rules & Guidance. Its original Word attachment is byte-identical; all 129 nonempty paragraphs/table cells are retained in source order in the HTML and printable PDF. Both documents return to Education. Hosting-only release; no finance, attendance or database services changed.
+
+Validation: full portal health checks; both mobile document pages and return links; all download targets; original mini-guide byte comparison; all 129 mini-guide text cells/paragraphs in HTML/PDF; all 32 questions, references and source excerpts in Word/PDF; and generator checks against the SHA-256-pinned Constitution passed.
