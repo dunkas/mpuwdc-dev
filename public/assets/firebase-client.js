@@ -76,7 +76,7 @@ async function signInEmailLink(email){
   await ready(); if(!state.enabled) throw new Error('Firebase is not connected. Open System Check for setup details.');
   const {sendSignInLinkToEmail}=state.sdk.authMod;
   const requested=new URLSearchParams(location.search).get('next')||'/admin/';
-  const next=(requested.startsWith('/admin/')||requested==='/finance/'||requested==='/finance')&&!requested.startsWith('//')&&!requested.includes('\\')?requested:'/admin/';
+  const next=(requested.startsWith('/admin/')||requested==='/finance/'||requested==='/finance'||requested==='/finance/workspace/'||requested==='/finance/workspace'||requested==='/attendance/'||requested==='/attendance')&&!requested.startsWith('//')&&!requested.includes('\\')?requested:'/admin/';
   const url = location.origin + '/admin/login/?next='+encodeURIComponent(next);
   localStorage.setItem('mpu_login_next',next);
   await sendSignInLinkToEmail(state.auth,email,{url,handleCodeInApp:true});

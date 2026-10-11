@@ -1,0 +1,3 @@
+import '/assets/firebase-client.js?v=election5';
+let cached;
+export async function functionsFor(){await MPUCloud.ready();if(cached)return cached;const cloud=MPUCloud.state();if(!cloud.enabled)throw Error('Firebase is unavailable.');const {getApp}=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');const {getFunctions,httpsCallable,connectFunctionsEmulator}=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js');const f=getFunctions(getApp(),'us-central1');if(cloud.configSource==='local-emulator')connectFunctionsEmulator(f,'127.0.0.1',5001);cached=Object.fromEntries(['memberCard','attendanceData','attendanceCommand','openFinanceSession'].map(name=>[name,httpsCallable(f,name,{timeout:120000})]));return cached}

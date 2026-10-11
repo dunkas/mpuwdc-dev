@@ -36,8 +36,9 @@ service cloud.firestore {
 
     match /members/{memberId} {
       allow read: if signedIn() && (isVoterRole() || isFinance() || (request.auth.token.email_verified == true && resource.data.email == email()));
-      allow create, delete: if isVoterRole() || isAdmin();
-      allow update: if isVoterRole() || isAdmin() || (isFinance() && (!('id' in request.resource.data) || request.resource.data.id == memberId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['id','lastQualifyingPaymentDate','amountOwed','creditBalance','financialStatus','financeInitialized','financePaymentDates','financeBaselineQualifyingDate','updatedAt','updatedBy']));
+      allow create: if (isVoterRole() || isAdmin()) && !request.resource.data.keys().hasAny(['mpuNumber','qrToken','qrStatus','qrIssuedAt','qrIssuedBy']);
+      allow delete: if (isVoterRole() || isAdmin()) && !('mpuNumber' in resource.data);
+      allow update: if !request.resource.data.diff(resource.data).affectedKeys().hasAny(['mpuNumber','qrToken','qrStatus','qrIssuedAt','qrIssuedBy']) && (isVoterRole() || isAdmin() || (isFinance() && (!('id' in request.resource.data) || request.resource.data.id == memberId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['id','lastQualifyingPaymentDate','amountOwed','creditBalance','financialStatus','financeInitialized','financePaymentDates','financeBaselineQualifyingDate','updatedAt','updatedBy'])));
     }
     match /lgas/{id} {
       allow read: if signedIn();
@@ -45,7 +46,7 @@ service cloud.firestore {
     }
     match /attendance/{id} {
       allow read: if signedIn() && (isVoterRole() || (request.auth.token.email_verified == true && resource.data.email == email()));
-      allow create, update, delete: if isVoterRole();
+      allow write: if false;
     }
     // Finance House attendance is saved by its password-protected server service.
     match /attendanceEntries/{id} {

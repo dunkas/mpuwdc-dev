@@ -1,0 +1,1 @@
+{"name":"mpu-qr-assets","private":true,"scripts":{"build":"esbuild entry.js --bundle --minify --format=iife --global-name=MPUQR --outfile=../../public/assets/qr-tools.min.js --legal-comments=eof"},"dependencies":{"@zxing/browser":"0.1.5","qrcode":"1.5.4"},"devDependencies":{"esbuild":"0.25.12"}}

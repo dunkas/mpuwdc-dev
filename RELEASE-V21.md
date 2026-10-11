@@ -44,3 +44,7 @@ Finance House opening balances imported from workbooks remain dated snapshots, a
 ## Financial Portal consolidation
 
 The full 14-section finance workspace now opens directly at `/finance/`. The Electoral homepage retains a single MPU Financial Portal entry and My Member Account; duplicate Finance Team and member-card finance links are removed. Legacy `/admin/finance/` bookmarks redirect to the portal. Staff utility pages return to the Financial Portal, including email-link sign-in and password reset. Existing attendance tools and attendance-only permissions are preserved. Backend services, financial records, attendance records and security rules are unchanged. QR card/scanner implementation is a separate future release.
+
+## QR membership cards and Meeting Attendance
+
+The Financial Portal is a shared entrance for members, Finance and the password-protected Attendance Center. Member ID and QR Card tools are inside the existing finance member record; My Member Account shows the same issued QR. Attendance has scan, scanner-import and manual-entry options using stable meetings and the same register. Unique number/token reservations, card revocation, per-member/meeting transactional records and audited corrections are enforced on the server. Legacy histories are retained, and old recording entry points are disconnected. See QR-ATTENDANCE.md for staff workflow, offline operation, hardware verification and deployment scope.

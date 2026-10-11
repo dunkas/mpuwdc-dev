@@ -16,6 +16,7 @@ async function execute(db,actor,command,now=new Date()){
  if(!actor?.uid||!actor.emailVerified)V.fail('Sign in with a verified email address.','unauthenticated');
  if(actor.passwordSession!==true)V.fail('Unlock the finance workspace with your password.','unauthenticated');
  const action=V.text(command.action,60,true),d=command.data||{},nonce=V.id(command.requestId),requestHash=hash(JSON.stringify({action,data:d}));
+ if(['attendanceEntry','importAttendanceRows'].includes(action))V.fail('Attendance recording has moved to the password-protected Meeting Attendance Center.','failed-precondition');
  return db.runTransaction(async tx=>{
   const profile=await tx.get(db.doc('users/'+actor.uid));
   const role=profile.exists?(['chairman','admin'].includes(profile.data().role)?profile.data().role:profile.data().financeRole||profile.data().role):actor.email==='dunkas@gmail.com'?'chairman':null;

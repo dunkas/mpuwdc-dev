@@ -24,8 +24,8 @@ function attendanceState(m,entries,today,cfg={}){
  const year=Number(cfg.attendanceYear||today.slice(0,4)),minimum=Number(cfg.attendanceMinimum??3);
  if(!Number.isInteger(year)||year<2000||!Number.isInteger(minimum)||minimum<1)throw Error('Invalid attendance policy');
  const finalDate=cfg.finalDateRule==='manual'&&validDate(cfg.finalMeetingDate)&&cfg.finalMeetingDate.startsWith(String(year))?cfg.finalMeetingDate:thirdSundayNovember(year);
- const records=entries.filter(a=>a.memberId===m.id&&validDate(a.date)&&a.date.startsWith(String(year))&&a.date<=today);
- const count=new Set(records.filter(a=>a.status==='Present').map(a=>a.date+'|'+a.meeting)).size;
+ const records=entries.filter(a=>a.memberId===m.id&&a.qualifying!==false&&validDate(a.date)&&a.date.startsWith(String(year))&&a.date<=today);
+ const count=new Set(records.filter(a=>a.status==='Present').map(a=>a.meetingId||a.date+'|'+a.meeting)).size;
  return {year,minimum,finalDate,count,known:records.length>0,reminderDue:records.length>0&&count===minimum-1&&today>=year+'-10-01'&&today<=finalDate};
 }
 function attendanceMessage(m,s){return `Dear ${m.fullName||'Member'}, thank you for being part of MPU. Our records show ${s.count} meetings attended in ${s.year}. We would be pleased to see you at the final quarterly meeting on ${s.finalDate}, so you can complete the ${s.minimum}-meeting attendance requirement. Please let the Secretary know if a meeting you attended is missing from our records. Thank you for your continued support.`}

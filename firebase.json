@@ -22,7 +22,7 @@
           },
           {
             "key": "Permissions-Policy",
-            "value": "geolocation=(), microphone=(), camera=()"
+            "value": "geolocation=(), microphone=(), camera=(self)"
           },
           {
             "key": "Cache-Control",
@@ -52,12 +52,22 @@
     "redirects": [
       {
         "source": "/admin/finance",
-        "destination": "/finance/",
+        "destination": "/finance/workspace/",
         "type": 301
       },
       {
         "source": "/admin/finance/",
-        "destination": "/finance/",
+        "destination": "/finance/workspace/",
+        "type": 301
+      },
+      {
+        "source": "/admin/attendance",
+        "destination": "/attendance/",
+        "type": 301
+      },
+      {
+        "source": "/admin/attendance/",
+        "destination": "/attendance/",
         "type": 301
       }
     ]
@@ -67,7 +77,7 @@
     "indexes": "firestore.indexes.json"
   },
   "functions": {
-    "source": "functions"
+    "source": "recovery/finance-functions"
   },
   "storage": {
     "rules": "storage.rules"

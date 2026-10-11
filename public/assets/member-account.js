@@ -1,3 +1,4 @@
+import {ownCard} from '/assets/membership-card.js';
 const sourceArea=new URLSearchParams(location.search).get('from');const memberReturn='/member-account/'+(['education','finance','admin'].includes(sourceArea)?'?from='+sourceArea:'');
 const el = id => document.getElementById(id);
 const money = value => value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value)) && Number(value) >= 0
@@ -5,8 +6,9 @@ const money = value => value !== null && value !== undefined && value !== '' && 
 let cloud, sample = false, loadVersion = 0;
 const sampleMember = {fullName:'Sample Member', amountOwed:75, membershipStatus:'Active', financialStatus:'Balance due — sample', attendanceCount:1, attendanceStatus:'1 meeting recorded — sample', lga:'Ahiazu Mbaise'};
 const samplePayments = [{paymentDate:'2026-09-15',paymentType:'Annual Dues',paymentMethod:'Zelle',amount:50,verificationStatus:'Verified'}, {paymentDate:'2026-10-01',paymentType:'Levy',paymentMethod:'Zelle',amount:25,verificationStatus:'Pending'}];
-function clearAccount(){ el('account').hidden=true; el('history').replaceChildren(); el('attendanceHistory').replaceChildren(); el('memberLga').textContent=''; el('memberName').textContent='Member account'; ['balance','membership','attendance','financialStatus','attendanceStatus'].forEach(id=>el(id).textContent=''); }
+function clearAccount(){el('membershipCard').replaceChildren(); el('account').hidden=true; el('history').replaceChildren(); el('attendanceHistory').replaceChildren(); el('memberLga').textContent=''; el('memberName').textContent='Member account'; ['balance','membership','attendance','financialStatus','attendanceStatus'].forEach(id=>el(id).textContent=''); }
 function render(member, payments, attendance = []){
+ el('membershipCard').textContent=sample?'Membership cards are issued only for real, verified member records.':'Loading membership card…';
  el('account').hidden=false; el('sampleNotice').hidden=!sample; el('refresh').hidden=sample;
  el('memberName').textContent=member?.fullName || 'Your member account';
  el('recordNote').textContent=sample?'Fictional preview • No official records changed':member?(member.financeSnapshotDate?'Balance from the finance snapshot dated '+member.financeSnapshotDate+'. Contact Finance for reconciliation; this is not a live bank balance.':'Records supplied by MPU. Contact Finance if they need updating.'):'No membership record was found for your signed-in email. Contact the membership team.';
@@ -47,11 +49,11 @@ async function load(){
    const memberId=members[0].id;
    const historic=await getDocs(query(collection(state.db,'attendanceEntries'),where('memberId','==',memberId)));
    for(const doc of historic.docs){const row=doc.data();attendance.push({...row,meetingDate:row.date,meetingName:row.meeting});}
-   if(attendance.length){const meetings=new Map();for(const row of attendance){const key=(row.meetingDate||'')+'|'+(row.meetingName||'');const prior=meetings.get(key);if(!prior||String(row.updatedAt||'')>=String(prior.updatedAt||''))meetings.set(key,row)}attendance.splice(0,attendance.length,...meetings.values());const year=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric'}).format(new Date());members[0].attendanceCount=attendance.filter(r=>r.status==='Present'&&String(r.meetingDate||'').startsWith(year)).length;members[0].attendanceStatus=members[0].attendanceCount+' meeting(s) recorded in '+year; }
+   if(attendance.length){const replaced=new Set(attendance.map(r=>r.legacySourceId).filter(Boolean));attendance.splice(0,attendance.length,...attendance.filter(r=>!replaced.has(r.id)));const meetings=new Map();for(const row of attendance){const key=row.meetingId||((row.meetingDate||'')+'|'+(row.meetingName||''));const prior=meetings.get(key);if(!prior||String(row.updatedAt||'')>=String(prior.updatedAt||''))meetings.set(key,row)}attendance.splice(0,attendance.length,...meetings.values());const year=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric'}).format(new Date());members[0].attendanceCount=attendance.filter(r=>r.status==='Present'&&String(r.meetingDate||'').startsWith(year)).length;members[0].attendanceStatus=members[0].attendanceCount+' meeting(s) recorded in '+year; }
   }
   if(version !== loadVersion || state.auth.currentUser?.uid!==user.uid || sample)return;
   if(members.length>1)throw new Error('Multiple membership records require review');
-  render(members[0],payments,attendance);el('message').textContent='Your records are loaded. This account is read-only.';
+  render(members[0],payments,attendance);if(members.length===1){const holder=el('membershipCard'),cardVersion=loadVersion;const staging=document.createElement('div');ownCard(staging).then(()=>{if(loadVersion===cardVersion&&!sample&&state.auth.currentUser?.uid===user.uid)holder.replaceChildren(...staging.childNodes)})}el('message').textContent='Your records are loaded. This account is read-only.';
  }catch{if(sample || version !== loadVersion)return;clearAccount();el('message').textContent='Your records could not be loaded. Contact MPU to check your account access, or try refreshing.'}
 }
 el('preview').onclick=()=>{++loadVersion;sample=true;render(sampleMember,samplePayments.slice(),[{meetingDate:'2026-09-20',meetingName:'General meeting — sample',status:'Present'}]);el('message').textContent='Viewing fictional sample records.'};

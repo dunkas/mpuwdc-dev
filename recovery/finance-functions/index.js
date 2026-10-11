@@ -56,3 +56,10 @@ exports.electionLegacy=onCall({region:'us-central1'},async request=>{try{return 
 exports.submitElectionCorrection=onCall({region:'us-central1'},async request=>{try{return await election.submitCorrection(db,actorFor(request),request.data||{})}catch(e){throw new HttpsError(typeof e.code==='string'?e.code:'internal',typeof e.code==='string'?e.message:'The correction could not be saved.');}});
 
 exports.submitPaymentDetails=onCall({region:'us-central1'},async request=>{try{return await election.submitPayment(db,actorFor(request),request.data||{})}catch(e){throw new HttpsError(typeof e.code==='string'?e.code:'internal',typeof e.code==='string'?e.message:'The payment details could not be saved.');}});
+
+// QR cards and Attendance Center: deploy these named functions only.
+const memberServices=require('./member-services');
+const memberCallable=handler=>onCall({region:'us-central1',timeoutSeconds:120},async request=>{try{return sessions.json(await handler(db,actorFor(request),request.data||{}))}catch(e){if(typeof e.code==='string')throw new HttpsError(e.code,e.message);console.error('Member service failed',e);throw new HttpsError('internal','The member operation could not be completed. Refresh and try again.')}});
+exports.memberCard=memberCallable(memberServices.card);
+exports.attendanceData=memberCallable(memberServices.data);
+exports.attendanceCommand=memberCallable(memberServices.execute);
