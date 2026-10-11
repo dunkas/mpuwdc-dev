@@ -64,5 +64,11 @@ const fixtures=require('./fixtures.cjs');
 
  await pass('unverified bootstrap address cannot access staff payments',()=>assertFails(getDocs(collection(env.authenticatedContext('unverified-chair',{email:'dunkas@gmail.com',email_verified:false}).firestore(),'payments'))));
  await pass('unverified Finance identity cannot access staff payments',()=>assertFails(getDocs(collection(env.authenticatedContext('test-finance',{email:'finance@example.test',email_verified:false}).firestore(),'payments'))));
+ await pass('member cannot self-assign additional Finance Team access',()=>assertFails(updateDoc(doc(member,'users','test-member-a'),{financeRole:'finance'})));
+ await pass('new user cannot self-assign receipt printing',()=>assertFails(setDoc(doc(env.authenticatedContext('new-finance',{email:'new@example.test',email_verified:true}).firestore(),'users','new-finance'),{email:'new@example.test',role:'pending',financeRole:'finance_print'})));
+ await env.withSecurityRulesDisabled(c=>setDoc(doc(c.firestore(),'attendanceEntries','finance-meeting-a'),{memberId:'test-member-a',date:'2026-09-20',meeting:'Quarterly',status:'Present'}));
+ await pass('member reads own Finance House attendance',async()=>assert.equal((await assertSucceeds(getDocs(query(collection(member,'attendanceEntries'),where('memberId','==','test-member-a'))))).size,1));
+ await pass('member cannot read another Finance House attendance',()=>assertFails(getDocs(query(collection(member,'attendanceEntries'),where('memberId','==','test-member-b')))));
+ await pass('member cannot write Finance House attendance',()=>assertFails(setDoc(doc(member,'attendanceEntries','fake'),{memberId:'test-member-a',date:'2026-10-11',status:'Present'})));
  await env.cleanup();console.log(`${count} checks passed; fictional fixtures retained in the local emulator.`);
 })().catch(e=>{console.error(e);process.exit(1)});

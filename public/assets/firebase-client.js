@@ -45,6 +45,7 @@ async function init(){
     if (cfg.emulators && ['localhost','127.0.0.1'].includes(location.hostname)) {
       authMod.connectAuthEmulator(auth, 'http://127.0.0.1:9099', {disableWarnings:true});
       fsMod.connectFirestoreEmulator(db, '127.0.0.1', 8080);
+      configSource = 'local-emulator';
     }
     state={...state,enabled:true,auth,db,sdk:{authMod,fsMod},ready:true,configSource};
     await new Promise(resolve=>{
@@ -74,7 +75,10 @@ async function ready(){ return readyPromise; }
 async function signInEmailLink(email){
   await ready(); if(!state.enabled) throw new Error('Firebase is not connected. Open System Check for setup details.');
   const {sendSignInLinkToEmail}=state.sdk.authMod;
-  const url = location.origin + '/admin/login/';
+  const requested=new URLSearchParams(location.search).get('next')||'/admin/';
+  const next=requested.startsWith('/admin/')&&!requested.startsWith('//')&&!requested.includes('\\')?requested:'/admin/';
+  const url = location.origin + '/admin/login/?next='+encodeURIComponent(next);
+  localStorage.setItem('mpu_login_next',next);
   await sendSignInLinkToEmail(state.auth,email,{url,handleCodeInApp:true});
   localStorage.setItem('mpu_login_email',email);
 }
@@ -153,4 +157,5 @@ async function connectionTest(){
   if(state.user){ try{ await ensureUserProfile(); out.role=role()||''; out.firestoreWrite=true; }catch(e){ out.writeError=e.message; } }
   return out;
 }
-window.MPUCloud={ready,state:()=>({...state}),get resolvedConfig(){return {...fb}},get validConfig(){return looksValid(fb)},signInEmailLink,completeEmailLink,signOutUser,role,hasRole,requireRole,applyRoleVisibility,getPortalSettings,savePortalSettings,getEvents,saveEvent,deleteEvent,seedPublicData,logAudit,getAudit,submitRegisterCorrection,getRegisterCorrections,updateRegisterCorrection,ensureUserProfile,getUsers,updateUserAccess,getWorkPlanState,saveWorkPlanState,getCollectionDocs,setCollectionDoc,deleteCollectionDoc,bulkUpsert,getFinanceConfig,saveFinanceConfig,queueNotification,connectionTest};
+async function signInPassword(email,password){await ready();if(!state.enabled||state.configSource!=='local-emulator')throw Error('Local emulator sign-in only.');await state.sdk.authMod.signInWithEmailAndPassword(state.auth,email,password);await ensureUserProfile();}
+window.MPUCloud={signInPassword,ready,state:()=>({...state}),get resolvedConfig(){return {...fb}},get validConfig(){return looksValid(fb)},signInEmailLink,completeEmailLink,signOutUser,role,hasRole,requireRole,applyRoleVisibility,getPortalSettings,savePortalSettings,getEvents,saveEvent,deleteEvent,seedPublicData,logAudit,getAudit,submitRegisterCorrection,getRegisterCorrections,updateRegisterCorrection,ensureUserProfile,getUsers,updateUserAccess,getWorkPlanState,saveWorkPlanState,getCollectionDocs,setCollectionDoc,deleteCollectionDoc,bulkUpsert,getFinanceConfig,saveFinanceConfig,queueNotification,connectionTest};

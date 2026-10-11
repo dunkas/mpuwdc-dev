@@ -26,11 +26,11 @@ service cloud.firestore {
     }
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
-      allow create: if signedIn() && request.auth.uid == uid && request.resource.data.email == email()
+      allow create: if signedIn() && request.auth.uid == uid && request.resource.data.email == email() && request.resource.data.get('financeRole','') == ''
         && (request.resource.data.role == 'pending'
           || (isBootstrapChairman() && request.resource.data.role == 'chairman')
           || (hasOwnDirectory() && request.resource.data.role == directoryRole()));
-      allow update: if isAdmin() || (signedIn() && request.auth.uid == uid && request.resource.data.role == resource.data.role);
+      allow update: if isAdmin() || (signedIn() && request.auth.uid == uid && request.resource.data.role == resource.data.role && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName','lastSignInAt']));
       allow delete: if isAdmin();
     }
 
@@ -46,6 +46,13 @@ service cloud.firestore {
     match /attendance/{id} {
       allow read: if signedIn() && (isVoterRole() || (request.auth.token.email_verified == true && resource.data.email == email()));
       allow create, update, delete: if isVoterRole();
+    }
+    // Finance House attendance is saved by its password-protected server service.
+    match /attendanceEntries/{id} {
+      allow read: if signedIn() && request.auth.token.get('email_verified',false) == true
+        && exists(/databases/$(database)/documents/members/$(resource.data.memberId))
+        && get(/databases/$(database)/documents/members/$(resource.data.memberId)).data.email == email();
+      allow write: if false;
     }
     match /registerCorrections/{id} {
       allow create: if signedIn() && request.auth.token.email_verified == true && request.resource.data.userEmail == email() && request.resource.data.userUid == request.auth.uid && request.resource.data.status == 'New' && request.resource.data.details is string && request.resource.data.details.size() > 0 && request.resource.data.details.size() <= 5000 && request.resource.data.get('contactPhone','') is string && request.resource.data.get('contactPhone','').size() <= 40;

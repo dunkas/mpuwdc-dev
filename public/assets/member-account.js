@@ -9,7 +9,7 @@ function clearAccount(){ el('account').hidden=true; el('history').replaceChildre
 function render(member, payments, attendance = []){
  el('account').hidden=false; el('sampleNotice').hidden=!sample; el('refresh').hidden=sample;
  el('memberName').textContent=member?.fullName || 'Your member account';
- el('recordNote').textContent=sample?'Fictional preview • No official records changed':member?'Records supplied by MPU. Contact Finance if they need updating.':'No membership record was found for your signed-in email. Contact the membership team.';
+ el('recordNote').textContent=sample?'Fictional preview • No official records changed':member?(member.financeSnapshotDate?'Balance from the finance snapshot dated '+member.financeSnapshotDate+'. Contact Finance for reconciliation; this is not a live bank balance.':'Records supplied by MPU. Contact Finance if they need updating.'):'No membership record was found for your signed-in email. Contact the membership team.';
  el('balance').textContent=money(member?.amountOwed);
  el('memberLga').textContent=member?.lga ? `LGA: ${member.lga}` : 'LGA not supplied';
  el('membership').textContent=member?.membershipStatus || 'Not available';
@@ -41,8 +41,14 @@ async function load(){
  try{
   const {collection,query,where,getDocs}=state.sdk.fsMod;
   // Always constrain reads to the authenticated email. Never fetch whole collections.
-  const own=async name=>{const snapshot=await getDocs(query(collection(state.db,name),where('email','==',user.email)));return snapshot.docs.map(d=>d.data())};
+  const own=async name=>{const snapshot=await getDocs(query(collection(state.db,name),where('email','==',user.email)));return snapshot.docs.map(d=>({...d.data(),id:d.id}))};
   const [members,payments,attendance]=await Promise.all([own('members'),own('payments'),own('attendance')]);
+  if(members.length===1){
+   const memberId=members[0].id;
+   const historic=await getDocs(query(collection(state.db,'attendanceEntries'),where('memberId','==',memberId)));
+   for(const doc of historic.docs){const row=doc.data();attendance.push({...row,meetingDate:row.date,meetingName:row.meeting});}
+   if(attendance.length){const meetings=new Map();for(const row of attendance){const key=(row.meetingDate||'')+'|'+(row.meetingName||'');const prior=meetings.get(key);if(!prior||String(row.updatedAt||'')>=String(prior.updatedAt||''))meetings.set(key,row)}attendance.splice(0,attendance.length,...meetings.values());const year=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric'}).format(new Date());members[0].attendanceCount=attendance.filter(r=>r.status==='Present'&&String(r.meetingDate||'').startsWith(year)).length;members[0].attendanceStatus=members[0].attendanceCount+' meeting(s) recorded in '+year; }
+  }
   if(version !== loadVersion || state.auth.currentUser?.uid!==user.uid || sample)return;
   if(members.length>1)throw new Error('Multiple membership records require review');
   render(members[0],payments,attendance);el('message').textContent='Your records are loaded. This account is read-only.';

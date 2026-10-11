@@ -28,3 +28,15 @@ Local rules checks cover 43 privacy/validation cases. Actual emulator Auth/Fires
 The original education Apps Script exposes its page but keeps the randomized question bank and answer keys server-side. Five Day 1 questions were recovered from the supplied public Google Form; their undisclosed answers remain ungraded. Other practice questions use explicit V21 citations. Supply the Apps Script server source/question bank to reproduce the exact remaining original quizzes.
 
 Outstanding: private signed-photo upload, full structured candidate acceptance/verification/state transitions, outbound notification email if required, real staff/member/LGA access review, and resolution of the source timetable signature date 10/7/2027. Current candidate buttons submit EC requests; practice scores do not establish eligibility.
+
+## Finance House restoration — October 11, 2026
+
+Restored from Hosting version 612a6f7487d71065: all 14 original sections, original styling, receipt PDF/Excel libraries, finance and attendance import review, card/outgoing records, evidence and cash handovers, configuration, registration, audit history and historical member payment submissions. The homepage now includes a direct Finance Team entry. Existing live finance callable services remain active and are not redeployed. Their recovered source is versioned in recovery/finance-functions without private legacy records.
+
+Restored role management supports additional Finance access without discarding an EC role, receipt-only access, attendance-only access, and print/attendance assistant access. Self-assignment of these roles is denied. Finance sign-in destinations survive email-link authentication; the workspace retains its password proof and inactivity lock. Zelle stays pending until manually verified, with a required bank-match acknowledgment in the restored interface.
+
+The dev evidence bucket was missing and is now provisioned at mpuwdc-dev.firebasestorage.app. Storage rules allow only verified, authorized uploaders with a server-created ticket of matching owner, file size and content type. Files cannot be overwritten, deleted or read directly; the existing financeFile service validates original checksums before returning evidence.
+
+Validation: 41 recovered service checks; 12 actual local Auth/Functions/Firestore/Storage integration checks; 11 Finance House browser checks including both persisted imports and member-visible attendance; 48 portal privacy/rule checks; 9 member-account interface checks; broader Education/document navigation checks passed. All test records are fictional and confined to demo projects. No real payment or member record is created by live verification.
+
+Finance House opening balances imported from workbooks remain dated snapshots, as in the original workspace; a confirmed receipt does not automatically recompute those snapshots. The account page labels their date. Existing pending submissions remain reviewable; current public member access remains read-only. Gmail/phone delivery is not configured; queued receipts do not mean sent. These limits are retained explicitly.
