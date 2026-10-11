@@ -6,3 +6,5 @@ build6/
 legacy/
 MPU_*
 
+# Published mini-guide attachments belong in version control and release archives.
+!public/documents/election-day-mini-rules/MPU_*
