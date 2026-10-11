@@ -25,4 +25,4 @@ function name(){return 'MPU_'+dataset.value+'_report_'+(asOf.value||new Date().t
 dataset.onchange=()=>{setStatuses();run()};[asOf,lga,status,method,ptype,from,to].forEach(x=>x.onchange=run);runReport.onclick=run;csvBtn.onclick=()=>D.exportCSV(rows,name(),cols);xlsxBtn.onclick=()=>D.exportExcel(rows,name());pdfBtn.onclick=()=>D.exportPDF(rows,name(),reportTitle.textContent,cols);
 qualifiedBtn.onclick=()=>{dataset.value='eligibility';setStatuses();status.value='Qualified';run();D.exportExcel(rows,'MPU_Qualified_Voter_Register_'+asOf.value);};lastQuarterZelle.onclick=()=>{dataset.value='payments';setStatuses();method.value='Zelle';from.value=qStartLastQuarter().toISOString().slice(0,10);to.value=qEndLastQuarter().toISOString().slice(0,10);run();};
 asOf.value=new Date().toISOString().slice(0,10);window.addEventListener('mpu-cloud-ready',load);setTimeout(()=>{if(window.MPUCloud)load()},400);
-</script><script defer src="/assets/section-navigation.js"></script></body></html>
+</script><script defer src="/assets/section-navigation.js"></script><script defer src="/assets/designer-credit.js"></script></body></html>

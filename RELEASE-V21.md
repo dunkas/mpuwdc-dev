@@ -64,3 +64,11 @@ The Constitutional Questions HTML, Word and PDF now contain 32 reviewed question
 Education opens Election Day Mini Rules instead of Open Rules & Guidance. Its original Word attachment is byte-identical; all 129 nonempty paragraphs/table cells are retained in source order in the HTML and printable PDF. Both documents return to Education. Hosting-only release; no finance, attendance or database services changed.
 
 Validation: full portal health checks; both mobile document pages and return links; all download targets; original mini-guide byte comparison; all 129 mini-guide text cells/paragraphs in HTML/PDF; all 32 questions, references and source excerpts in Word/PDF; and generator checks against the SHA-256-pinned Constitution passed.
+
+## Voter register and designer credit
+
+Finance Team → Reports & exports now generates a private, date-specific voter register with Date Joined, permanent MPU number, LGA, quarterly attendance, bonus attendance, verified dues, Active / Not Active status, eligibility reasons and a native boolean voterEligible. Annual members require three of four quarterly meetings (75%); user-approved newer-member rules require two meetings after six months, including quarters across a year boundary. Missing evidence remains Needs Review. Password-protected, audited staff reviews verify identity dates and constitutional qualifications; financial changes invalidate outdated dues reviews. CSV, Excel and readable PDF exports respect the selected filters. See VOTER-REGISTER.md.
+
+Designed by Amara Dunkas is restored in locally rendered cursive across portal pages. Official uploaded documents remain unchanged.
+
+Validation: 69 unit tests, 51 Firestore privacy/permission checks, four voter-register backend integration checks, 12 existing finance integration checks, eight voter-register browser checks, ten existing finance browser checks and full portal health checks passed using fictional local emulator records. Deployment scope: financeCommand, Firestore rules and Hosting only.

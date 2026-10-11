@@ -10,4 +10,4 @@ function stats(){const n=model.filter(x=>x.complete).length;done.textContent=n;t
 async function load(){try{if(MPUCloud.state().enabled){const x=await MPUCloud.getWorkPlanState();if(x&&Array.isArray(x.tasks))model=x.tasks;}render()}catch(e){console.warn(e);render()}}
 saveBtn.onclick=async()=>{localStorage.setItem('mpu_shared_work_plan',JSON.stringify(model));if(MPUCloud.state().enabled){await MPUCloud.saveWorkPlanState({tasks:model});alert('Shared Work Plan saved to Firebase.')}else alert('Saved in this DEV browser. Connect Firebase for shared team state.')};
 window.addEventListener('mpu-cloud-ready',load);render();
-</script><script defer src="/assets/section-navigation.js"></script></body></html>
+</script><script defer src="/assets/section-navigation.js"></script><script defer src="/assets/designer-credit.js"></script></body></html>

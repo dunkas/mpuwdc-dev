@@ -11,7 +11,7 @@ const finance=require('./finance-service');
 const sessions=require('./finance-session');
 const actorFor=request=>({uid:request.auth?.uid,email:request.auth?.token.email||'',emailVerified:request.auth?.token.email_verified===true});
 exports.financeCommand=onCall({region:'us-central1'},async request=>{
- try{const actor=actorFor(request);actor.passwordSession=await sessions.verify(db,actor,request.data?.session);return sessions.json(await finance.execute(db,actor,request.data||{}))}
+ try{const actor=actorFor(request);actor.passwordSession=await sessions.verify(db,actor,request.data?.session);if(request.data?.action==='voterRegister')return sessions.json(await require('./voter-service').report(db,actor,request.data.data||{}));return sessions.json(await finance.execute(db,actor,request.data||{}))}
  catch(error){if(error.code&&typeof error.code==='string')throw new HttpsError(error.code,error.message);console.error('Finance operation failed',error);throw new HttpsError('internal','The finance operation could not be completed. No partial change was saved.')}
 });
 exports.openFinanceSession=onCall({region:'us-central1'},async request=>{
