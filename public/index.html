@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MPU 2026 ELECTION Portal</title>
+  <link rel="icon" href="/assets/mpu-logo.png">
+  <link rel="stylesheet" href="/assets/styles.css?v=build10">
+</head>
+<body class="portal-home">
+<header class="top home-top">
+  <div class="wrap brand-row">
+    <div class="brand">
+      <img src="/assets/mpu-logo.png" alt="MPU logo">
+      <div>
+        <h1>MPU 2026 ELECTION Portal</h1>
+        <p>Ndi Mbaise, obodo eji eje Mba!</p>
+      </div>
+    </div>
+    <nav class="nav home-nav" aria-label="Portal navigation">
+      <a class="active" href="/">⌂ <span>Home</span></a>
+      <a href="/payment/">▣ <span>MPU Payment</span></a>
+      <a href="/voter-education/">▤ <span>Voter Education</span></a>
+      <a href="/admin/">⚙ <span>EC Admin</span></a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap home-wrap">
+  <section class="phase-shell final-hero">
+    <div class="phase-main">
+      <div class="phase-kicker">
+        <span class="live-pill">LIVE PHASE</span>
+        <span class="phase-label">Current Election Phase</span>
+      </div>
+      <h2 id="phaseTitle">Loading current phase…</h2>
+      <p class="phase-sub" id="phaseDesc"></p>
+
+      <div class="final-date-row">
+        <span class="calendar-icon" aria-hidden="true">▣</span>
+        <span class="phase-date" id="phaseDate"></span>
+        <span class="countdown">
+          <span class="count" id="daysCount">—</span>
+          <span class="unit" id="daysUnit">DAYS LEFT</span>
+        </span>
+      </div>
+
+      <div class="phase-action-row" id="phaseActions"></div>
+
+      <div class="timeline-compact final-timeline">
+        <div class="timeline-title">Election Timeline</div>
+        <div class="timeline-flow visual-timeline" id="timelineFlow"></div>
+        <div class="timeline-tools single-tool">
+          <a class="timeline-link-btn" href="/event-calendar/">▣ <span>View Full Election Timeline</span> →</a>
+        </div>
+      </div>
+    </div>
+
+    <aside class="important-panel important" id="importantPanel">
+      <div class="important-head">
+        <span class="notice-marker" id="noticeMarker">!</span>
+        <span id="noticeLabel">IMPORTANT NOW</span>
+      </div>
+      <div class="important-body">
+        <h3 id="importantHeadline"></h3>
+        <p id="importantBody"></p>
+        <ul id="importantBullets"></ul>
+        <div class="notice-expiry" id="noticeExpiry"></div>
+      </div>
+    </aside>
+  </section>
+
+  <section class="home-primary-grid" aria-label="Candidate actions">
+    <article class="home-action-card">
+      <div class="round-icon blue">👥</div>
+      <div class="action-copy">
+        <h3>Nominate Another Member</h3>
+        <p>Submit a nomination for an eligible MPU member.</p>
+        <button class="btn primary action-btn" onclick="goConfigured('candidatePortalUrl', MPU_CONFIG.legacyPortalUrl)">Start Nomination <span>→</span></button>
+      </div>
+    </article>
+
+    <article class="home-action-card">
+      <div class="round-icon green">●</div>
+      <div class="action-copy">
+        <h3>Enter as a Candidate</h3>
+        <p>Self-nominate and begin your candidate entry for the 2026 election.</p>
+        <button class="btn primary action-btn" onclick="goConfigured('candidatePortalUrl', MPU_CONFIG.legacyPortalUrl)">Self-Nominate <span>→</span></button>
+      </div>
+    </article>
+
+    <article class="home-action-card">
+      <div class="round-icon purple">▤</div>
+      <div class="action-copy">
+        <h3>Candidate Access</h3>
+        <p>Accept or decline a nomination, complete information, check status, or withdraw.</p>
+        <button class="btn primary action-btn" onclick="goConfigured('candidatePortalUrl', MPU_CONFIG.legacyPortalUrl)">Candidate Access <span>→</span></button>
+      </div>
+    </article>
+  </section>
+
+  <section class="home-secondary-grid" aria-label="Payment and support">
+    <article class="home-action-card payment-feature" id="paymentCard">
+      <div class="round-icon gold">▣</div>
+      <div class="action-copy">
+        <h3>MPU Payment</h3>
+        <p>Payment instructions and verification for Zelle, cash and check records.</p>
+        <a class="btn gold action-btn" href="/payment/">Pay / Verify <span>→</span></a>
+      </div>
+    </article>
+
+    <article class="home-action-card contact-feature" id="contactCard">
+      <div class="round-icon cyan">☁</div>
+      <div class="action-copy contact-copy">
+        <h3>Contact EC</h3>
+        <p>Ask a question, request help, or report an election concern to the Electoral Committee.</p>
+        <div class="contact-actions">
+          <button class="btn primary" type="button" data-support="question">▣ Ask a Question</button>
+          <button class="btn ghost" type="button" data-support="help">? Need Help?</button>
+          <button class="btn incident-outline" type="button" data-support="incident">⚠ Report Incident</button>
+        </div>
+        <div class="contact-inline" id="contactInline" aria-live="polite"></div>
+      </div>
+    </article>
+  </section>
+
+  <section class="signed-photo-strip" aria-label="Handwritten and signed photo instructions">
+    <div class="strip-icon">▤</div>
+    <div class="strip-copy">
+      <div class="strip-title-row">
+        <h3>2026 Election Rules — Handwritten &amp; Signed Photo</h3>
+        <span class="required-pill">REQUIRED FOR CANDIDATES</span>
+      </div>
+      <p>Every candidate must submit a clear photo of the handwritten declaration. A clear signed plain-paper submission is accepted when it includes the required information. Eligibility remains subject to EC verification.</p>
+      <div class="strip-actions">
+        <a class="btn strip-ghost" href="/voter-education/#rules">▤ Read 2026 Election Rules</a>
+        <a class="btn primary" href="/voter-education/submission-guidance/#sample">▤ See Handwritten Sample</a>
+        <button class="btn gold" type="button" onclick="goConfigured('candidatePortalUrl', MPU_CONFIG.legacyPortalUrl)">▣ Submit Signed Photo</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer final-footer">MPU Electoral Committee — Here to Serve You.</footer>
+
+<script src="/config.js?v=build10"></script>
+<script src="/assets/app.js?v=build10"></script>
+<script src="/assets/runtime.js?v=build10"></script>
+<script type="module" src="/assets/firebase-client.js?v=build10"></script>
+<script>
+(function(){
+  const R=MPURuntime;
+  const $=id=>document.getElementById(id);
+
+  function timelineNode(label,e,cls=''){
+    if(!e) return '';
+    return `<div class="phase-chip ${cls}"><span class="timeline-dot" aria-hidden="true"></span><span class="mini">${label}</span><span class="name" title="${R.esc(e.title)}">${R.esc(e.title)}</span><span class="timeline-date">${R.esc(e.displayDate||e.start||'')}</span></div>`;
+  }
+
+  function render(){
+    const phase=R.getPhase(),cur=phase.current,s=R.getSettings();
+    if(cur){
+      $('phaseTitle').textContent=cur.title;
+      $('phaseDesc').textContent=cur.description||'';
+      $('phaseDate').textContent=cur.displayDate||cur.start||'';
+      const d=R.daysLeft(cur);
+      $('daysCount').textContent=d;
+      $('daysUnit').textContent=d===1?'DAY LEFT':'DAYS LEFT';
+      const url=cur.actionUrl||'/event-calendar/';
+      const label=cur.actionLabel||(cur.phaseType==='register-review'?'Check My Record':'View Details');
+      $('phaseActions').innerHTML=`<a class="btn ${cur.phaseType==='register-review'?'gold':'primary'}" href="${R.esc(url)}">${R.esc(label)}</a>`;
+    }
+
+    const events=R.getEvents().filter(x=>x.published!==false);
+    const nowIdx=Math.max(0,events.findIndex(e=>phase.current&&e.id===phase.current.id));
+    const visible=events.slice(nowIdx,Math.min(events.length,nowIdx+5));
+    $('timelineFlow').innerHTML=visible.map((e,i)=>timelineNode(i===0?'CURRENT':i===1?'NEXT':'UPCOMING',e,i===0?'current':'')).join('');
+
+    const n=R.getImportant();
+    if(!n){
+      $('importantPanel').classList.add('hidden');
+    }else{
+      const sev=n.severity||'important';
+      const meta={info:['i','INFORMATION'],important:['!','IMPORTANT NOW'],urgent:['!','URGENT'],success:['✓','UPDATE COMPLETE']}[sev]||['!','IMPORTANT NOW'];
+      $('importantPanel').className='important-panel '+sev;
+      $('noticeMarker').textContent=meta[0];
+      $('noticeLabel').textContent=meta[1];
+      $('importantHeadline').textContent=n.headline||'Important update';
+      $('importantBody').textContent=n.body||'';
+      $('importantBullets').innerHTML=(n.bullets||[]).map(x=>`<li>${R.esc(x)}</li>`).join('');
+      $('noticeExpiry').textContent=n.end?'Visible through '+n.end:'';
+    }
+
+    const c=s.contact||{};
+    const details=[];
+    if(c.email) details.push(`<div><strong>Email:</strong> ${R.esc(c.email)}</div>`);
+    if(c.phone) details.push(`<div><strong>Phone/Text:</strong> ${R.esc(c.phone)}</div>`);
+    if(c.whatsapp) details.push(`<div><strong>WhatsApp:</strong> ${R.esc(c.whatsapp)}</div>`);
+    if(c.hours) details.push(`<div>${R.esc(c.hours)}</div>`);
+    const fallback=`<div>Use the Electoral Committee's approved communication channel for assistance.</div>`;
+
+    document.querySelectorAll('[data-support]').forEach(btn=>{
+      btn.onclick=()=>{
+        const type=btn.dataset.support;
+        const title=type==='incident'?'Report an Election Incident':type==='help'?'Need Help?':'Ask the Electoral Committee';
+        const intro=type==='incident'
+          ?'Provide a private, factual description of the election concern. Include date, time and relevant details.'
+          :type==='help'
+            ?'For portal, eligibility, nomination or process help, contact the Electoral Committee.'
+            :'Send your question or request for clarification to the Electoral Committee.';
+        $('contactInline').innerHTML=`<div class="contact-panel"><strong>${title}</strong><p>${intro}</p>${details.length?details.join(''):fallback}</div>`;
+        $('contactInline').classList.add('open');
+      };
+    });
+  }
+
+  render();
+  window.addEventListener('mpu-cloud-ready',async()=>{
+    try{
+      const C=MPUCloud;
+      if(!C.state().enabled)return;
+      const [settings,events]=await Promise.all([C.getPortalSettings(),C.getEvents()]);
+      if(settings)R.saveSettings(settings);
+      if(events&&events.length)R.saveEvents(events);
+      render();
+    }catch(e){console.warn('Public cloud sync skipped',e)}
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+
+.firebase/
+node_modules/
+*.zip
+build6/
+legacy/
+MPU_*
+

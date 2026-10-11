@@ -1,0 +1,18 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MPU EC Admin Sign In</title><link rel="stylesheet" href="/assets/styles.css?v=build10"></head><body>
+<header class="top"><div class="wrap brand-row"><div class="brand"><img src="/assets/mpu-logo.png" alt="MPU logo"><div><h1>EC Admin Sign In</h1><p>Passwordless role-based access</p></div></div><nav class="nav"><a href="/">Public Portal</a></nav></div></header>
+<main class="wrap"><section class="section auth-card"><h2>Sign in with your MPU/EC email</h2><p class="section-sub">Firebase sends a secure sign-in link. First-time users are placed in <b>Pending Approval</b> until Chairman/Admin assigns a role.</p><form id="loginForm"><div class="field"><label>Email address</label><input id="email" type="email" required autocomplete="email"></div><button class="btn gold">Send Secure Sign-In Link</button></form><div id="msg" class="auth-message"></div><div id="devBox" class="callout hidden" style="margin-top:16px"><b>DEV preview mode:</b> Firebase Web App credentials are not connected yet. The local development bypass remains available for interface testing only.</div></section></main>
+<script src="/config.js?v=build10"></script><script type="module" src="/assets/firebase-client.js?v=build10"></script><script>
+window.addEventListener('mpu-cloud-ready',async()=>{
+ const C=MPUCloud,s=C.state(); if(!s.enabled){devBox.classList.remove('hidden'); return;}
+ const stored=localStorage.getItem('mpu_login_email')||''; if(stored) email.value=stored;
+ try{
+   const candidate=stored||'';
+   if(candidate && await C.completeEmailLink(candidate)){
+      await C.ensureUserProfile();
+      const next=new URLSearchParams(location.search).get('next')||'/admin/';
+      location.replace(C.role()==='pending'?'/admin/pending/':next);
+   }
+ }catch(e){msg.textContent=e.message}
+});
+loginForm.onsubmit=async e=>{e.preventDefault();msg.textContent='Sending…';try{await MPUCloud.signInEmailLink(email.value.trim());msg.innerHTML='<span class="success">Secure sign-in link sent. Open the link from your email.</span>'}catch(err){msg.innerHTML='<span class="danger">'+err.message+'</span>'}};
+</script></body></html>

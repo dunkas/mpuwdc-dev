@@ -1,0 +1,30 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MPU EC Admin</title><link rel="stylesheet" href="/assets/styles.css?v=build10"></head><body data-allowed-roles="chairman,admin,ec,secretary,voter_register,screening,communications,finance">
+<header class="top"><div class="wrap brand-row"><div class="brand"><img src="/assets/mpu-logo.png" alt="MPU logo"><div><h1>MPU EC Admin Center</h1><p>Role-based operational workspace</p></div></div><nav class="nav"><a href="/">Public Portal</a><a href="/admin/settings/">Config</a></nav></div></header>
+<main class="wrap"><div class="admin-toolbar"><span class="role-badge">Signed in role: <span data-role-label style="margin-left:4px"></span></span><span class="cloud-status" data-cloud-status></span><button class="btn small ghost" id="signOutBtn" type="button">Sign Out</button></div>
+<section class="section"><h2>Operations & Records</h2><div class="ops-row">
+<button class="btn primary" onclick="alert('Questions & Replies will connect to the existing portal queue in the integration build.')">Questions & Replies</button>
+<a class="btn primary" href="/admin/calendar/">Event Calendar</a>
+<a class="btn gold" href="/admin/documents/">Document Center & Printing</a>
+<button class="btn primary" onclick="alert('Incidents & Decisions will be connected in the integration build.')">Incidents & Decisions</button>
+<button class="btn primary" onclick="alert('Election Day Records & Results will be connected in the integration build.')">Election Day Records & Results</button>
+</div></section>
+
+<section class="section"><h2>Administration Work Areas</h2><div class="admin-grid">
+<div class="admin-card" data-roles="chairman,admin,ec,secretary,voter_register,screening,communications"><div class="icon">📋</div><h3>EC Work Plan</h3><p>Editable task checks, Yes/No choices, deadlines and role assignments.</p><a class="btn primary" href="/admin/work-plan/">Open Work Plan</a></div>
+<div class="admin-card" data-roles="chairman,admin,voter_register"><div class="icon">🗳️</div><h3>Register Review</h3><p>Review member correction requests and verify changes against official source records.</p><a class="btn primary" href="/admin/register-review/">Open Corrections</a></div>
+<div class="admin-card" data-roles="chairman,admin,finance"><div class="icon">💰</div><h3>Finance Verification</h3><p>Verify Zelle, cash, check and other approved payment records. Finance access remains role-restricted.</p><a class="btn gold" href="/admin/finance/">Open Finance</a></div>
+<div class="admin-card" data-roles="chairman,admin,screening,secretary"><div class="icon">👤</div><h3>Candidate Screening</h3><p>Candidate files, credentials, discrepancies and screening status.</p><a class="btn primary" href="/admin/candidates/">Open Candidate Screening</a></div>
+<div class="admin-card" data-roles="chairman,admin,screening,secretary"><div class="icon">📝</div><h3>Nominations</h3><p>Nomination, acceptance, validation, withdrawal and audit trail.</p><a class="btn primary" href="/admin/nominations/">Open Nominations</a></div>
+<div class="admin-card" data-roles="chairman,admin"><div class="icon">🔐</div><h3>User Access & Roles</h3><p>Approve first-time sign-ins and assign least-privilege EC/Finance roles.</p><a class="btn primary" href="/admin/users/">Manage Access</a></div>
+<div class="admin-card" data-roles="chairman,admin,finance,voter_register,secretary"><div class="icon">📊</div><h3>Reports & Exports</h3><p>Eligibility, finance, attendance and suspension-risk reporting with CSV, Excel and PDF export.</p><a class="btn primary" href="/admin/reports/">Open Reports</a></div>
+<div class="admin-card" data-roles="chairman,admin,finance,voter_register,secretary,screening"><div class="icon">⇄</div><h3>Import & Migration Center</h3><p>Upload CSV/Excel, map columns, preview records and migrate supplied legacy election data.</p><a class="btn primary" href="/admin/import-center/">Open Import Center</a></div>
+<div class="admin-card" data-roles="chairman,admin,ec,secretary,voter_register,screening,communications"><div class="icon">☁️</div><h3>Shared Work Plan</h3><p>Cloud-synced task completion, readiness, deadlines and notes for the whole EC.</p><a class="btn gold" href="/admin/work-plan-shared/">Open Shared Tracker</a></div>
+<div class="admin-card" data-roles="chairman,admin"><div class="icon">⚙️</div><h3>Portal Configuration</h3><p>Control Current Phase, Important Now, contacts, visibility and public messages without redeploying.</p><a class="btn primary" href="/admin/settings/">Configure Portal</a></div>
+<div class="admin-card" data-roles="chairman,admin,secretary"><div class="icon">🧾</div><h3>Audit & Activity Log</h3><p>Track who changed voter, payment, candidate, event, document and override records.</p><a class="btn primary" href="/admin/audit/">Open Audit Log</a></div>
+</div></section>
+
+
+<section class="section"><h2>System</h2><a class="btn primary" href="/admin/system-check/">Run System Check</a></section></main><script src="/config.js?v=build10"></script><script src="/assets/app.js?v=build10"></script><script type="module" src="/assets/admin-guard.js?v=build10"></script><script>
+signOutBtn.onclick=async()=>{await MPUCloud.signOutUser();location.href='/admin/login/'};
+</script></body></html>

@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function email() { return signedIn() && request.auth.token.email != null ? request.auth.token.email : ''; }
+    // One-time bootstrap identity sourced from the supplied legacy EC directory.
+    function isBootstrapChairman() { return signedIn() && email() == 'dunkas@gmail.com'; }
+    function userDoc() { return /databases/$(database)/documents/users/$(request.auth.uid); }
+    function hasUserDoc() { return signedIn() && exists(userDoc()); }
+    function role() { return hasUserDoc() ? get(userDoc()).data.role : (isBootstrapChairman() ? 'chairman' : null); }
+    function isAdmin() { return role() in ['chairman','admin']; }
+    function isEC() { return role() in ['chairman','admin','ec','secretary','voter_register','screening','communications']; }
+    function isFinance() { return role() in ['chairman','admin','finance']; }
+    function isVoterRole() { return role() in ['chairman','admin','voter_register']; }
+    function isCandidateRole() { return role() in ['chairman','admin','screening','secretary']; }
+    function ownDirectoryPath() { return /databases/$(database)/documents/accessDirectory/$(email()); }
+    function hasOwnDirectory() { return signedIn() && email() != '' && exists(ownDirectoryPath()); }
+    function directoryRole() { return hasOwnDirectory() ? get(ownDirectoryPath()).data.role : null; }
+
+    match /portalConfig/{docId} { allow read: if true; allow write: if isAdmin(); }
+    match /events/{eventId} { allow read: if true; allow create, update, delete: if role() in ['chairman','admin','secretary','communications']; }
+
+    match /accessDirectory/{directoryEmail} {
+      allow read: if signedIn() && (email() == directoryEmail || isAdmin());
+      allow create, update, delete: if isAdmin();
+    }
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if signedIn() && request.auth.uid == uid && request.resource.data.email == email()
+        && (request.resource.data.role == 'pending'
+          || (isBootstrapChairman() && request.resource.data.role == 'chairman')
+          || (hasOwnDirectory() && request.resource.data.role == directoryRole()));
+      allow update: if isAdmin() || (signedIn() && request.auth.uid == uid && request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
+    }
+
+    match /members/{memberId} {
+      allow read: if signedIn() && (isVoterRole() || isFinance() || resource.data.email == email());
+      allow create, update, delete: if isVoterRole() || isAdmin();
+    }
+    match /registerCorrections/{id} {
+      allow create: if signedIn() && request.resource.data.userEmail == email();
+      allow read: if signedIn() && (isVoterRole() || resource.data.userEmail == email());
+      allow update: if isVoterRole(); allow delete: if isAdmin();
+    }
+    match /payments/{paymentId} {
+      allow create: if signedIn();
+      allow read: if signedIn() && (resource.data.userUid == request.auth.uid || resource.data.email == email() || isFinance());
+      allow update: if isFinance(); allow delete: if isAdmin();
+    }
+    match /financeConfig/{docId} { allow read, write: if isFinance(); }
+    match /duesObligations/{id} { allow read: if isFinance() || isVoterRole(); allow create, update: if isFinance() || isAdmin(); allow delete: if isAdmin(); }
+    match /importBatches/{id} { allow read: if isEC() || isFinance(); allow create: if isEC() || isFinance(); allow update, delete: if isAdmin(); }
+    match /notificationsQueue/{id} { allow read, create, update: if isFinance() || isAdmin(); allow delete: if isAdmin(); }
+    match /mail/{id} { allow read: if isAdmin() || isFinance(); allow create: if isAdmin() || isFinance(); allow update, delete: if false; }
+
+    match /ecWork/{doc=**} { allow read, write: if isEC(); }
+    match /ecWorkPlan/{docId} { allow read, write: if isEC(); }
+    match /candidates/{doc=**} { allow read, write: if isCandidateRole(); }
+    match /nominations/{doc=**} { allow read, write: if isCandidateRole(); }
+    match /memberVerification/{doc=**} { allow read, write: if isCandidateRole() || isVoterRole(); }
+    match /candidateAcceptance/{doc=**} { allow read, write: if isCandidateRole(); }
+    match /educationParticipants/{doc=**} { allow read, write: if isEC(); }
+    match /educationResults/{doc=**} { allow read, write: if isEC(); }
+    match /crashCourseResults/{doc=**} { allow read, write: if isEC(); }
+    match /crashCourseAttempts/{doc=**} { allow read, write: if isEC(); }
+    match /quizAttempts/{doc=**} { allow read, write: if isEC(); }
+    match /quizSessions/{doc=**} { allow read, write: if isEC(); }
+    match /moduleReleases/{doc=**} { allow read, write: if isEC(); }
+    match /legacyNotifications/{doc=**} { allow read, write: if isAdmin(); }
+    match /legacyAudit/{doc=**} { allow read, write: if isAdmin(); }
+
+    match /incidents/{doc=**} { allow create: if signedIn(); allow read, update: if role() in ['chairman','admin','secretary']; }
+    match /documents/{docId} { allow read: if resource.data.visibility == 'Public' || isEC(); allow create, update, delete: if role() in ['chairman','admin','secretary']; }
+    match /auditLog/{id} { allow create: if signedIn() && (isEC() || isFinance()); allow read: if role() in ['chairman','admin','secretary']; allow update, delete: if false; }
+  }
+}
