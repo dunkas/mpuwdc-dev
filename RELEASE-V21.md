@@ -48,3 +48,11 @@ The full 14-section finance workspace now opens directly at `/finance/`. The Ele
 ## QR membership cards and Meeting Attendance
 
 The Financial Portal is a shared entrance for members, Finance and the password-protected Attendance Center. Member ID and QR Card tools are inside the existing finance member record; My Member Account shows the same issued QR. Attendance has scan, scanner-import and manual-entry options using stable meetings and the same register. Unique number/token reservations, card revocation, per-member/meeting transactional records and audited corrections are enforced on the server. Legacy histories are retained, and old recording entry points are disconnected. See QR-ATTENDANCE.md for staff workflow, offline operation, hardware verification and deployment scope.
+
+## Quarterly attendance schedule and bonus meetings
+
+Attendance Center now displays four permanent quarterly slots for each selected year, with staff-managed actual dates and extra meetings marked Bonus. Bonus presence contributes to the existing attendance count without increasing the four regular slots or changing existing eligibility minimums. No meeting dates or attendance are guessed or seeded in the live database.
+
+Staff may explicitly select an existing calendar event when creating a meeting. Meeting edits atomically update the linked public calendar entry while preserving existing event details and attendance identity. Linked calendar entries return to Attendance Center for password-protected edits; direct client changes are denied. New membership-only events do not replace election phases on the homepage.
+
+Validation: 18 actual-emulator attendance/card integration checks, 15 browser workflow checks (including quarterly date/calendar linking), 49 Firestore privacy/permission checks, 49 finance unit checks, and full portal navigation/calendar health checks passed. Physical scanner/phone checks remain as documented in QR-ATTENDANCE.md.

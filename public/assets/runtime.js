@@ -205,7 +205,7 @@
   function saveEvents(v){return write(EVENT_KEY,v)}
   function publishedEvents(){return getEvents().filter(x=>x.published!==false).sort((a,b)=>parseDate(a.start)-parseDate(b.start))}
   function getPhase(now=new Date()){
-    const a=publishedEvents();
+    const a=publishedEvents().filter(e=>e.phaseType!=='membership-meeting');
     const active=a.filter(x=>{const s=parseDate(x.start),e=x.end?parseDate(x.end,true):parseDate(x.start,true);return s<=now&&e>=now}).sort((x,y)=>parseDate(y.start)-parseDate(x.start));
     const current=active[0]||a.find(x=>parseDate(x.start)>=now)||a[a.length-1]||null;
     const idx=current?a.findIndex(x=>x.id===current.id):-1;

@@ -1,7 +1,7 @@
 const {readFileSync}=require('node:fs');
 const assert=require('node:assert/strict');
 const {initializeTestEnvironment,assertSucceeds,assertFails}=require('@firebase/rules-unit-testing');
-const {doc,setDoc,getDoc,getDocs,collection,query,where,updateDoc}=require('firebase/firestore');
+const {doc,setDoc,getDoc,getDocs,collection,query,where,updateDoc,deleteDoc}=require('firebase/firestore');
 const fixtures=require('./fixtures.cjs');
 (async()=>{
  const env=await initializeTestEnvironment({projectId:'demo-mpu-members',firestore:{host:'127.0.0.1',port:8080,rules:readFileSync('firestore.rules','utf8')}});
@@ -30,6 +30,7 @@ const fixtures=require('./fixtures.cjs');
  await pass('Finance can update financial fields',()=>assertSucceeds(updateDoc(doc(finance,'members','test-member-a'),{id:'test-member-a',lastQualifyingPaymentDate:'2026-09-15',amountOwed:75,updatedAt:'2026-10-11',updatedBy:'finance@example.test'})));
  await pass('Finance cannot change member identifier',()=>assertFails(updateDoc(doc(finance,'members','test-member-a'),{id:'test-member-b'})));
  await pass('Finance cannot edit attendance summary',()=>assertFails(updateDoc(doc(finance,'members','test-member-a'),{attendanceCount:99})));
+ await pass('Calendar staff can edit ordinary events but cannot bypass protected attendance meetings',async()=>{await env.withSecurityRulesDisabled(async ctx=>setDoc(doc(ctx.firestore(),'users','calendar-secretary'),{role:'secretary'}));const calendar=env.authenticatedContext('calendar-secretary',{email:'calendar@example.test',email_verified:true}).firestore();await assertSucceeds(setDoc(doc(calendar,'events','ordinary-event'),{title:'Calendar fixture',start:'2026-10-11'}));await env.withSecurityRulesDisabled(async ctx=>setDoc(doc(ctx.firestore(),'events','linked-event'),{title:'Quarter fixture',start:'2026-10-11',attendanceLinked:true,meetingId:'quarter-2026-1'}));await assertFails(updateDoc(doc(calendar,'events','linked-event'),{start:'2026-10-12'}));await assertFails(deleteDoc(doc(calendar,'events','linked-event')));await assertFails(setDoc(doc(calendar,'events','forged-link'),{attendanceLinked:true,meetingId:'fake'}));await assertSucceeds(updateDoc(doc(calendar,'events','ordinary-event'),{title:'Updated fixture'}));});
  await pass('legacy attendance writes are disabled in favor of password-protected callables',()=>assertFails(updateDoc(doc(secretary,'attendance','test-a-september'),{status:'Present'})));
  const ec=env.authenticatedContext('test-ec',{email:'ec@example.test',email_verified:true}).firestore();
  const request={id:'test-ec-request',type:'question',senderUid:'test-member-a',senderEmail:'member.a@example.test',senderName:'Test Member A',message:'Please explain the review process.',nomineeName:'',nomineeEmail:'',office:'',candidateAction:'',reference:'',status:'New',createdAt:'2026-10-11'};
