@@ -48,6 +48,18 @@
           }
         ]
       }
+    ],
+    "redirects": [
+      {
+        "source": "/admin/finance",
+        "destination": "/finance/",
+        "type": 301
+      },
+      {
+        "source": "/admin/finance/",
+        "destination": "/finance/",
+        "type": 301
+      }
     ]
   },
   "firestore": {

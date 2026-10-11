@@ -11,7 +11,7 @@ const base=process.env.MPU_TEST_URL||'http://127.0.0.1:5000',password='EmulatorO
   const context=await browser.newContext(),page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
   await page.route('https://www.gstatic.com/firebasejs/10.14.1/**',route=>{const url=route.request().url();if(!cache.has(url))cache.set(url,execFileSync('curl',['--fail','--silent','--show-error','--max-time','30',url],{maxBuffer:8*1024*1024}));return route.fulfill({contentType:'text/javascript',body:cache.get(url)})});
   await page.route('**/config.js*',route=>route.fulfill({contentType:'text/javascript',body:"window.MPU_CONFIG={environment:'dev',authDevBypass:false,emulators:true,firebase:{dev:{apiKey:'demo-api-key',projectId:'demo-mpu-finance',appId:'demo-app',authDomain:'localhost',storageBucket:'demo-mpu-finance.appspot.com'}}}"}));
-  await page.goto(base+'/admin/finance/');await page.locator('#finance-email').waitFor();
+  await page.goto(base+'/finance/');await page.locator('#finance-email').waitFor();
   await page.locator('#finance-email').fill(email);await page.locator('#finance-password').fill(password);await page.getByRole('button',{name:'Unlock finance',exact:true}).click();
   await page.waitForFunction(()=>document.querySelectorAll('#nav button').length>0);return page;
  }
