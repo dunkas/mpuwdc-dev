@@ -72,3 +72,17 @@ Finance Team → Reports & exports now generates a private, date-specific voter 
 Designed by Amara Dunkas is restored in locally rendered cursive across portal pages. Official uploaded documents remain unchanged.
 
 Validation: 69 unit tests, 51 Firestore privacy/permission checks, four voter-register backend integration checks, 12 existing finance integration checks, eight voter-register browser checks, ten existing finance browser checks and full portal health checks passed using fictional local emulator records. Deployment scope: financeCommand, Firestore rules and Hosting only.
+
+## Finance governance, self-service Zelle and Treasurer links
+
+The Financial Portal starts with Record My Zelle Payment: verified registered members submit Zelle details with an optional confirmation number and a printable pending acknowledgment. Audited Finance review records one verified receipt or links an existing matching receipt. Duplicate member submissions, repeated Zelle references and repeat requests are blocked. Opening balances remain dated, reviewed snapshots rather than blindly recomputed totals.
+
+Chairman/Main Admin now invites staff, changes roles and disables access in Manage Staff Access. New staff choose their own password through expiring invitations; existing accounts retain their password. Replacing an unused invitation preserves first-time setup. The last enabled Chairman/Main Admin is protected. Auditors have a password-protected read-only finance workspace, period exports and findings/response histories; Finance cannot resolve its own findings. Auditor data excludes QR tokens, birth dates and delivery links.
+
+Finance edits ordinary member details with revision checks and reasons. LGA, activation/deactivation, archive and duplicate merge requests require Chairman/Admin approval. Merges retain permanent IDs and historical documents as linked aliases, revoke duplicate cards and require fresh eligibility/balance review. Member account and quarterly reports include approved linked histories. Direct client edits of staff access, member records and payments are retired in favor of audited server actions.
+
+Funds Handover & Deposits links existing cash/check receipts to the signed physical register, reserving receipts once. A secure, expiring, no-login Treasurer link captures explicit confirmation or actual-amount differences automatically. Opening a link is read-only. Deposits are tracked separately, cannot precede handover or exceed acknowledged funds, and require bank evidence before confirmation. Handovers/deposits never add income a second time. Legacy handover records remain retained.
+
+Messaging is explicitly a placeholder. Sender/provider/service-account metadata may be configured, but no email/text worker or credentials are enabled. Notifications remain Not sent; private invitation/acknowledgment links may be copied. No fake members, staff accounts or transactions are seeded live. See FINANCE-GOVERNANCE.md for staff workflows, limits and exact deployment scope.
+
+Validation: 71 unit tests; 56 Firestore rules checks; 21 new platform integration checks; 12 existing finance, 18 attendance/card and four voter-register backend checks; nine platform, ten finance and eight voter-register browser checks; plus full portal health checks. All transactional fixtures were confined to demo emulators.

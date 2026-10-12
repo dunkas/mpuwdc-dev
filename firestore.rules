@@ -7,7 +7,7 @@ service cloud.firestore {
     function isBootstrapChairman() { return signedIn() && request.auth.token.get('email_verified',false) == true && email() == 'dunkas@gmail.com'; }
     function userDoc() { return /databases/$(database)/documents/users/$(request.auth.uid); }
     function hasUserDoc() { return signedIn() && exists(userDoc()); }
-    function role() { return signedIn() && request.auth.token.get('email_verified',false) == true ? (hasUserDoc() ? get(userDoc()).data.role : (isBootstrapChairman() ? 'chairman' : '')) : ''; }
+    function role() { return signedIn() && request.auth.token.get('email_verified',false) == true ? (hasUserDoc() ? (get(userDoc()).data.get('disabled',false) != true && get(userDoc()).data.get('active',true) != false ? get(userDoc()).data.role : '') : (isBootstrapChairman() ? 'chairman' : '')) : ''; }
     function isAdmin() { return role() in ['chairman','admin']; }
     function isEC() { return role() in ['chairman','admin','ec','secretary','voter_register','screening','communications']; }
     function isFinance() { return role() in ['chairman','admin','finance']; }
@@ -22,23 +22,23 @@ service cloud.firestore {
 
     match /accessDirectory/{directoryEmail} {
       allow read: if signedIn() && (email() == directoryEmail || isAdmin());
-      allow create, update, delete: if isAdmin();
+      allow create, update, delete: if false;
     }
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
-      allow create: if signedIn() && request.auth.uid == uid && request.resource.data.email == email() && request.resource.data.get('financeRole','') == ''
+      allow create: if signedIn() && request.auth.uid == uid && request.resource.data.keys().hasOnly(['uid','email','displayName','role','status','createdAt','lastSignInAt','source','financeRole']) && request.resource.data.email == email() && request.resource.data.get('financeRole','') == ''
         && (request.resource.data.role == 'pending'
           || (isBootstrapChairman() && request.resource.data.role == 'chairman')
-          || (hasOwnDirectory() && request.resource.data.role == directoryRole()));
-      allow update: if isAdmin() || (signedIn() && request.auth.uid == uid && request.resource.data.role == resource.data.role && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName','lastSignInAt']));
-      allow delete: if isAdmin();
+          || (hasOwnDirectory() && get(ownDirectoryPath()).data.get('active',true) != false && request.resource.data.role == directoryRole()));
+      allow update: if (signedIn() && request.auth.uid == uid && request.resource.data.role == resource.data.role && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName','lastSignInAt']));
+      allow delete: if false;
     }
 
     match /members/{memberId} {
       allow read: if signedIn() && (isVoterRole() || isFinance() || (request.auth.token.email_verified == true && resource.data.email == email()));
-      allow create: if (isVoterRole() || isAdmin()) && !request.resource.data.keys().hasAny(['mpuNumber','qrToken','qrStatus','qrIssuedAt','qrIssuedBy','voterReview','voterReviewRevision','dateOfBirth']);
+      allow create: if (isVoterRole() || isAdmin()) && !request.resource.data.keys().hasAny(['mpuNumber','qrToken','qrStatus','qrIssuedAt','qrIssuedBy','voterReview','voterReviewRevision','dateOfBirth','linkedMemberIds','mergedInto','archivedAt']);
       allow delete: if (isVoterRole() || isAdmin()) && !('mpuNumber' in resource.data);
-      allow update: if !request.resource.data.diff(resource.data).affectedKeys().hasAny(['mpuNumber','qrToken','qrStatus','qrIssuedAt','qrIssuedBy','voterReview','voterReviewRevision','dateOfBirth']) && (isVoterRole() || isAdmin() || (isFinance() && (!('id' in request.resource.data) || request.resource.data.id == memberId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['id','lastQualifyingPaymentDate','amountOwed','creditBalance','financialStatus','financeInitialized','financePaymentDates','financeBaselineQualifyingDate','updatedAt','updatedBy'])));
+      allow update: if false;
     }
     match /lgas/{id} {
       allow read: if signedIn();
@@ -67,18 +67,14 @@ service cloud.firestore {
           && request.resource.data.get('matchedBy', '') == email());
     }
     match /payments/{paymentId} {
-      allow create: if isFinance() && confirmedPayment();
-      allow read: if signedIn() && (isFinance() || (request.auth.token.email_verified == true && (resource.data.userUid == request.auth.uid || resource.data.email == email())));
-      allow update: if isFinance() && (confirmedPayment()
-        || (resource.data.verificationStatus == 'Verified'
-          && request.resource.data.verificationStatus == 'Verified'
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['balanceAppliedCents','updatedAt','updatedBy'])));
-      allow delete: if isAdmin();
+      allow read: if signedIn() && (isFinance() || (request.auth.token.email_verified == true && (resource.data.get('userUid','') == request.auth.uid || resource.data.get('email','') == email())));
+      allow create, update, delete: if false;
     }
-    match /financeConfig/{docId} { allow read, write: if isFinance(); }
+
+    match /financeConfig/{docId} { allow read: if isFinance(); allow write: if false; }
     match /duesObligations/{id} { allow read: if isFinance() || isVoterRole(); allow create, update: if isFinance() || isAdmin(); allow delete: if isAdmin(); }
     match /importBatches/{id} { allow read: if isEC() || isFinance(); allow create: if isEC() || isFinance(); allow update, delete: if isAdmin(); }
-    match /notificationsQueue/{id} { allow read, create, update: if isFinance() || isAdmin(); allow delete: if isAdmin(); }
+    match /notificationsQueue/{id} { allow read, write: if false; }
     match /mail/{id} { allow read: if isAdmin() || isFinance(); allow create: if isAdmin() || isFinance(); allow update, delete: if false; }
 
     match /ecWork/{doc=**} { allow read, write: if isEC(); }

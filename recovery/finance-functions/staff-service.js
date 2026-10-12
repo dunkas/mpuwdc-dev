@@ -1,0 +1,24 @@
+'use strict';
+const {getAuth}=require('firebase-admin/auth'),{FieldValue}=require('firebase-admin/firestore'),{randomBytes}=require('node:crypto');
+const G=require('./platform-service'),V=require('./finance-validation');
+const stamp=()=>FieldValue.serverTimestamp(),admins=['chairman','admin'];
+async function execute(db,actor,input,now=new Date()){
+ await G.authorize(db,actor,admins);
+ if(input.action==='list'){const s=await db.collection('users').get();return {roles:G.STAFF,users:s.docs.map(d=>{const p={...d.data(),uid:d.id};delete p.inviteHash;return p}),deliveryStatus:'Not sent — delivery service not configured'}}
+ if(input.action==='invite'){
+  const d=input.data||{},email=G.email(d.email),name=V.text(d.name,150,true),role=V.text(d.role,40,true),reason=V.text(d.reason,2000,true);if(!G.STAFF.includes(role))V.fail('Choose a supported staff role.');
+  let user,created=false;try{user=await getAuth().getUserByEmail(email)}catch(e){if(e.code!=='auth/user-not-found')throw e;try{user=await getAuth().createUser({email,displayName:name});created=true}catch(x){if(x.code!=='auth/email-already-exists')throw x;user=await getAuth().getUserByEmail(email)}}
+  const token=randomBytes(32).toString('hex'),digest=G.hash(token),link=G.origin()+'/staff/invitation/#'+token;let existingAccount=!created;
+  await db.runTransaction(async tx=>{
+   await transactionAdmin(tx,db,actor);const ref=db.doc('users/'+user.uid),old=await tx.get(ref);const previous=/^[a-f0-9]{64}$/.test(old.data()?.inviteHash||'')?await tx.get(db.doc('secureFinanceLinks/'+old.data().inviteHash)):null;if(!created&&previous?.exists&&previous.data().kind==='invite'&&previous.data().target===user.uid&&previous.data().existingAccount===false&&!previous.data().used&&!user.emailVerified)existingAccount=false;await protectLastAdmin(tx,db,user.uid,role,true,old);const value={uid:user.uid,email,displayName:name,role,financeRole:old.exists&&old.data().role===role?old.data().financeRole||'':'',active:true,disabled:false,status:'Invited',invitationStatus:'Pending',inviteHash:digest,updatedAt:stamp(),updatedBy:actor.uid,...(!old.exists?{createdAt:stamp()}:{})};tx.set(ref,value,{merge:true});tx.set(db.doc('accessDirectory/'+email),{name,email,role,active:true},{merge:true});tx.create(db.doc('secureFinanceLinks/'+digest),{...G.linkTicket('invite',user.uid,token,now),existingAccount});G.queue(tx,db,'staff-invite-'+digest,{type:'Staff invitation',toEmail:email,channel:'Email',link,message:'You have been invited to MPU as '+role+'. Use your secure invitation to set up access.'});G.audit(tx,db,actor,'Invite staff',user.uid,old.exists?redact(old.data()):null,{email,role},reason);
+  });return {uid:user.uid,link,existingAccount,deliveryStatus:'Not sent — delivery service not configured'};
+ }
+ if(input.action!=='update')V.fail('Unknown staff action.');const d=input.data||{},uid=V.id(d.uid),role=V.text(d.role,40,true),financeRole=V.text(d.financeRole,40),active=d.active===true,reason=V.text(d.reason,2000,true);if(!G.STAFF.includes(role)&&role!=='pending'||financeRole&&!['finance','auditor','attendance','finance_print','finance_assistant'].includes(financeRole))V.fail('Choose a valid role.');
+ await db.runTransaction(async tx=>{await transactionAdmin(tx,db,actor);const ref=db.doc('users/'+uid),old=await tx.get(ref);if(!old.exists)V.fail('Staff user not found.');const directory=await tx.get(db.doc('accessDirectory/'+old.data().email));await protectLastAdmin(tx,db,uid,role,active,old);const value={role,financeRole,active,disabled:!active,status:active?'Active':'Disabled',updatedAt:stamp(),updatedBy:actor.uid};tx.update(ref,value);tx.set(directory.ref,{role,active},{merge:true});G.audit(tx,db,actor,'Change staff access',uid,redact(old.data()),value,reason)});
+ // Firestore role/disabled checks enforce immediate removal even while an ID token is cached.
+ await getAuth().revokeRefreshTokens(uid);return {updated:true};
+}
+async function transactionAdmin(tx,db,actor){const s=await tx.get(db.doc('users/'+actor.uid));const role=s.exists?s.data().role:actor.email==='dunkas@gmail.com'?'chairman':'';if(!admins.includes(role)||s.data()?.disabled||s.data()?.active===false)V.fail('Chairman/Admin access changed.','permission-denied')}
+async function protectLastAdmin(tx,db,uid,role,active,old){const lock=db.doc('staffLocks/admins');await tx.get(lock);const users=await tx.get(db.collection('users'));const survivors=users.docs.filter(s=>s.id!==uid&&admins.includes(s.data().role)&&s.data().active!==false&&!s.data().disabled);if(old.exists&&admins.includes(old.data().role)&&(!active||!admins.includes(role))&&!survivors.length)V.fail('The last Chairman/Main Admin cannot be removed.','failed-precondition');tx.set(lock,{updatedAt:stamp()})}
+function redact(p){const v={...p};delete v.inviteHash;return v}
+module.exports={execute};

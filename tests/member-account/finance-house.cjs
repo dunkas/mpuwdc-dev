@@ -16,7 +16,7 @@ const base=process.env.MPU_TEST_URL||'http://127.0.0.1:5000',password='EmulatorO
   if(email==='attendance@example.com')await page.waitForURL(url=>url.pathname.replace(/\/$/,'')==='/attendance');else await page.waitForFunction(()=>document.querySelectorAll('#nav button').length>0);return page;
  }
  try{
-  const page=await pageFor('finance@example.com');assert.equal(await page.locator('#nav button').count(),13);pass('Password unlock opens all 13 finance sections with attendance moved to its own center');
+  const page=await pageFor('finance@example.com');assert.equal(await page.locator('#nav button').count(),15);pass('Password unlock opens all 15 finance sections with attendance moved to its own center');
   for(const view of await page.locator('#nav button').evaluateAll(nodes=>nodes.map(n=>n.dataset.page))){await page.locator(`#nav [data-page="${view}"]`).click();assert(await page.locator('#content h1').count()>0,view)}pass('Every original workspace section renders without a missing view');
   await page.locator('#nav [data-page="receipts"]').click();await page.locator('#content').getByRole('button',{name:'View',exact:true}).first().click();
   const downloaded=page.waitForEvent('download');await page.getByRole('button',{name:'Download PDF',exact:true}).click();const pdf=await downloaded;const path=await pdf.path();assert.equal(readFileSync(path).subarray(0,4).toString(),'%PDF');await page.getByRole('button',{name:'Close',exact:true}).click();pass('Receipt PDF downloads after audited server print request');

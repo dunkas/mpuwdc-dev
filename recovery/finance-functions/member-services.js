@@ -19,7 +19,7 @@ async function card(db,actor,d){
  if(action==='get'){const m=await ref.get();if(!m.exists)V.fail('Member not found.','not-found');if(m.data().email!==actor.email)await authorize(db,actor,d.session,full);return {...identity(m.data(),id),chapter:await chapter(db),qrToken:m.data().qrToken||'',qrStatus:m.data().qrStatus||'Not issued'};}
  await authorize(db,actor,d.session,full);if(!['issue','replace'].includes(action))V.fail('Unknown card action.');
  const reason=V.text(d.reason,500,action==='replace');const token=randomBytes(32).toString('hex');
- await db.runTransaction(async tx=>{await transactionRole(tx,db,actor,full);const m=await tx.get(ref);if(!m.exists)V.fail('Member not found.','not-found');const old=m.data();if(action==='issue'&&old.qrToken&&old.qrStatus==='Active')return;
+ await db.runTransaction(async tx=>{await transactionRole(tx,db,actor,full);const m=await tx.get(ref);if(!m.exists)V.fail('Member not found.','not-found');const old=m.data();if(old.archivedAt||old.mergedInto)V.fail('Archived membership cards cannot be issued or replaced.','failed-precondition');if(action==='issue'&&old.qrToken&&old.qrStatus==='Active')return;
  let number=old.mpuNumber;const counterRef=db.doc('membershipConfig/numberCounter');let next;
  if(!number){const counter=await tx.get(counterRef);next=Number(counter.data()?.next||1);if(!Number.isSafeInteger(next)||next<1)V.fail('The member number counter needs review.','failed-precondition');number='MPU'+String(next).padStart(4,'0');}
  const nr=db.doc('memberNumbers/'+number),registry=await tx.get(nr),qr=db.doc('memberQRTokens/'+hash(token)),check=await tx.get(qr);

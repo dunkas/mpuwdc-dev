@@ -2,7 +2,7 @@
 const {randomBytes,createHash}=require('node:crypto');
 const {Timestamp,FieldValue}=require('firebase-admin/firestore');
 const V=require('./finance-validation');
-const roles=['chairman','admin','finance','finance_print','attendance','finance_assistant'];
+const roles=['chairman','admin','finance','finance_print','attendance','finance_assistant','auditor'];
 const digest=v=>createHash('sha256').update(v).digest('hex');
 async function roleFor(db,actor){if(!actor.uid||!actor.emailVerified)V.fail('Sign in with a verified email address.','unauthenticated');const snap=await db.doc('users/'+actor.uid).get(),p=snap.exists?snap.data():{},role=snap.exists?(['chairman','admin'].includes(p.role)?p.role:p.financeRole||p.role):actor.email==='dunkas@gmail.com'?'chairman':null;if(!roles.includes(role)||p.disabled===true||p.active===false)V.fail('An approved finance or attendance role is required.','permission-denied');return role}
 let keyCache;
@@ -25,7 +25,7 @@ async function data(db,actor,token){if(!await verify(db,actor,token))V.fail('Unl
  const config=await db.doc('financeConfig/main').get(),cfg=config.exists?config.data():{};
  const output={role,members:[],payments:[],types:[],audit:[],attendance:[],outgoing:[],cards:[],evidence:[],handovers:[],queue:[],cfg};
  if(full)output.submissions=await read('paymentSubmissions');
- if(full){[output.members,output.payments,output.types,output.audit,output.attendance,output.outgoing,output.cards,output.evidence,output.handovers,output.queue]=await Promise.all(['members','payments','paymentTypes','financeAudit','attendanceEntries','financeOutgoing','financeCardAccounts','financeEvidence','financeHandovers','notificationsQueue'].map(read));}
+ if(full||role==='auditor'){[output.members,output.payments,output.types,output.audit,output.attendance,output.outgoing,output.cards,output.evidence,output.handovers,output.queue]=await Promise.all(['members','payments','paymentTypes','financeAudit','attendanceEntries','financeOutgoing','financeCardAccounts','financeEvidence','financeHandovers','notificationsQueue'].map(read));}
  else{
   output.cfg={organizationName:cfg.organizationName,receiptFooter:cfg.receiptFooter,attendanceYear:cfg.attendanceYear,attendanceMinimum:cfg.attendanceMinimum,finalDateRule:cfg.finalDateRule,finalMeetingDate:cfg.finalMeetingDate};
   // Callable JSON cannot include undefined fields.
@@ -33,7 +33,8 @@ async function data(db,actor,token){if(!await verify(db,actor,token))V.fail('Unl
   if(print)output.payments=(await read('payments')).map(p=>Object.fromEntries(['id','receiptNumber','memberName','paymentMethod','paymentDate','amount','status','verificationStatus','paymentType','allocations','referenceNumber','checkNumber','receivedBy','voidedAt','replacementState'].filter(k=>p[k]!==undefined).map(k=>[k,p[k]])));
   if(attendance){output.members=(await read('members')).map(m=>({id:m.id,fullName:m.fullName||m.name||'',lga:m.lga||''}));output.attendance=await read('attendanceEntries');}
  }
- return output;
+ if(role==='auditor'){const fields=['id','fullName','name','lga','email','mpuNumber','memberSince','membershipStatus','amountOwed','financeSnapshotDate','financialStatus','lastQualifyingPaymentDate','archivedAt','mergedInto','linkedMemberIds'];output.members=output.members.map(m=>Object.fromEntries(fields.filter(k=>m[k]!==undefined).map(k=>[k,m[k]])));const redact=v=>Array.isArray(v)?v.map(redact):v&&Object.getPrototypeOf(v)===Object.prototype?Object.fromEntries(Object.entries(v).filter(([k])=>!['qrToken','dateOfBirth','activeLinkHash','inviteHash','link','secureLink','password'].includes(k)).map(([k,x])=>[k,redact(x)])):v;output.audit=output.audit.map(redact);}
+ output.handovers=output.handovers.map(h=>{const v={...h};delete v.activeLinkHash;return v});output.queue=output.queue.map(q=>{const v={...q};delete v.link;return v});return output;
 }
 function json(value){if(value?.toDate)return value.toDate().toISOString();if(Array.isArray(value))return value.map(json);if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).filter(([,v])=>v!==undefined).map(([k,v])=>[k,json(v)]));return value}
 module.exports={open,verify,data,roleFor,roles,json};

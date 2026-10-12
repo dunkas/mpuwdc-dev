@@ -41,16 +41,10 @@ async function load(){
  if(!user.emailVerified){el('message').textContent='Please verify your membership email before viewing records.';return}
  el('message').textContent='Loading your records…';
  try{
-  const {collection,query,where,getDocs}=state.sdk.fsMod;
-  // Always constrain reads to the authenticated email. Never fetch whole collections.
-  const own=async name=>{const snapshot=await getDocs(query(collection(state.db,name),where('email','==',user.email)));return snapshot.docs.map(d=>({...d.data(),id:d.id}))};
-  const [members,payments,attendance]=await Promise.all([own('members'),own('payments'),own('attendance')]);
-  if(members.length===1){
-   const memberId=members[0].id;
-   const historic=await getDocs(query(collection(state.db,'attendanceEntries'),where('memberId','==',memberId)));
-   for(const doc of historic.docs){const row=doc.data();attendance.push({...row,meetingDate:row.date,meetingName:row.meeting});}
+  // Server resolves one verified membership and approved historical aliases only.
+  const {getApp}=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),fm=await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-functions.js'),functions=fm.getFunctions(getApp(),'us-central1');if(state.configSource==='local-emulator')fm.connectFunctionsEmulator(functions,'127.0.0.1',5001);
+  const result=(await fm.httpsCallable(functions,'memberZelle')({action:'account'})).data;const members=[result.member],payments=result.payments,attendance=result.attendance;
    if(attendance.length){const replaced=new Set(attendance.map(r=>r.legacySourceId).filter(Boolean));attendance.splice(0,attendance.length,...attendance.filter(r=>!replaced.has(r.id)));const meetings=new Map();for(const row of attendance){const key=row.meetingId||((row.meetingDate||'')+'|'+(row.meetingName||''));const prior=meetings.get(key);if(!prior||String(row.updatedAt||'')>=String(prior.updatedAt||''))meetings.set(key,row)}attendance.splice(0,attendance.length,...meetings.values());const year=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric'}).format(new Date());members[0].attendanceCount=attendance.filter(r=>r.status==='Present'&&String(r.meetingDate||'').startsWith(year)).length;members[0].attendanceStatus=members[0].attendanceCount+' meeting(s) recorded in '+year; }
-  }
   if(version !== loadVersion || state.auth.currentUser?.uid!==user.uid || sample)return;
   if(members.length>1)throw new Error('Multiple membership records require review');
   render(members[0],payments,attendance);if(members.length===1){const holder=el('membershipCard'),cardVersion=loadVersion;const staging=document.createElement('div');ownCard(staging).then(()=>{if(loadVersion===cardVersion&&!sample&&state.auth.currentUser?.uid===user.uid)holder.replaceChildren(...staging.childNodes)})}el('message').textContent='Your records are loaded. This account is read-only.';
