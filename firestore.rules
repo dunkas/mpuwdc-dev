@@ -72,6 +72,11 @@ service cloud.firestore {
     }
 
     match /financeConfig/{docId} { allow read: if isFinance(); allow write: if false; }
+    match /duesSchedules/{id} { allow read, write: if false; }
+    match /memberLedgers/{id} { allow read, write: if false; }
+    match /memberObligations/{id} { allow read, write: if false; }
+    match /ledgerAllocations/{id} { allow read, write: if false; }
+    match /ledgerAdjustments/{id} { allow read, write: if false; }
     match /duesObligations/{id} { allow read: if isFinance() || isVoterRole(); allow create, update: if isFinance() || isAdmin(); allow delete: if isAdmin(); }
     match /importBatches/{id} { allow read: if isEC() || isFinance(); allow create: if isEC() || isFinance(); allow update, delete: if isAdmin(); }
     match /notificationsQueue/{id} { allow read, write: if false; }

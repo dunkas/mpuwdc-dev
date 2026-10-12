@@ -6,16 +6,16 @@ const money = value => value !== null && value !== undefined && value !== '' && 
 let cloud, sample = false, loadVersion = 0;
 const sampleMember = {fullName:'Sample Member', amountOwed:75, membershipStatus:'Active', financialStatus:'Balance due — sample', attendanceCount:1, attendanceStatus:'1 meeting recorded — sample', lga:'Ahiazu Mbaise'};
 const samplePayments = [{paymentDate:'2026-09-15',paymentType:'Annual Dues',paymentMethod:'Zelle',amount:50,verificationStatus:'Verified'}, {paymentDate:'2026-10-01',paymentType:'Levy',paymentMethod:'Zelle',amount:25,verificationStatus:'Pending'}];
-function clearAccount(){el('membershipCard').replaceChildren(); el('account').hidden=true; el('history').replaceChildren(); el('attendanceHistory').replaceChildren(); el('memberLga').textContent=''; el('memberName').textContent='Member account'; ['balance','membership','attendance','financialStatus','attendanceStatus'].forEach(id=>el(id).textContent=''); }
-function render(member, payments, attendance = []){
+function clearAccount(){el('ledgerBreakdown').replaceChildren();el('membershipCard').replaceChildren(); el('account').hidden=true; el('history').replaceChildren(); el('attendanceHistory').replaceChildren(); el('memberLga').textContent=''; el('memberName').textContent='Member account'; ['balance','membership','attendance','financialStatus','attendanceStatus'].forEach(id=>el(id).textContent=''); }
+function render(member, payments, attendance = [], ledger = null){
  el('membershipCard').textContent=sample?'Membership cards are issued only for real, verified member records.':'Loading membership card…';
  el('account').hidden=false; el('sampleNotice').hidden=!sample; el('refresh').hidden=sample;
  el('memberName').textContent=member?.fullName || 'Your member account';
  el('recordNote').textContent=sample?'Fictional preview • No official records changed':member?(member.financeSnapshotDate?'Balance from the finance snapshot dated '+member.financeSnapshotDate+'. Contact Finance for reconciliation; this is not a live bank balance.':'Records supplied by MPU. Contact Finance if they need updating.'):'No membership record was found for your signed-in email. Contact the membership team.';
- el('balance').textContent=money(member?.amountOwed);
+ el('balance').textContent=money(ledger?.active?ledger.outstandingCents/100:member?.amountOwed);if(ledger?.active){el('recordNote').textContent='Calculated from reviewed charges and verified allocations through '+ledger.asOf+'. Available credit: '+money(ledger.creditCents/100)+'. Unallocated verified funds: '+money(ledger.unallocatedCents/100)+'.';el('financialStatus').textContent=ledger.status;}renderLedger(ledger);
  el('memberLga').textContent=member?.lga ? `LGA: ${member.lga}` : 'LGA not supplied';
  el('membership').textContent=member?.membershipStatus || 'Not available';
- el('financialStatus').textContent=(member?.financialStatus || 'Financial standing has not been supplied.') + (member?.creditBalance > 0 ? ` · Credit on account: ${money(member.creditBalance)}` : '');
+ if(!ledger?.active)el('financialStatus').textContent=(member?.financialStatus || 'Financial standing has not been supplied.') + (member?.creditBalance > 0 ? ` · Credit on account: ${money(member.creditBalance)}` : '');
  const count=member?.attendanceCount;
  el('attendance').textContent=Number.isInteger(count)&&count>=0?`${count} meeting${count===1?'':'s'}`:'Not available';
  el('attendanceStatus').textContent=member?.attendanceStatus || 'Attendance status has not been supplied.';
@@ -47,7 +47,7 @@ async function load(){
    if(attendance.length){const replaced=new Set(attendance.map(r=>r.legacySourceId).filter(Boolean));attendance.splice(0,attendance.length,...attendance.filter(r=>!replaced.has(r.id)));const meetings=new Map();for(const row of attendance){const key=row.meetingId||((row.meetingDate||'')+'|'+(row.meetingName||''));const prior=meetings.get(key);if(!prior||String(row.updatedAt||'')>=String(prior.updatedAt||''))meetings.set(key,row)}attendance.splice(0,attendance.length,...meetings.values());const year=new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric'}).format(new Date());members[0].attendanceCount=attendance.filter(r=>r.status==='Present'&&String(r.meetingDate||'').startsWith(year)).length;members[0].attendanceStatus=members[0].attendanceCount+' meeting(s) recorded in '+year; }
   if(version !== loadVersion || state.auth.currentUser?.uid!==user.uid || sample)return;
   if(members.length>1)throw new Error('Multiple membership records require review');
-  render(members[0],payments,attendance);if(members.length===1){const holder=el('membershipCard'),cardVersion=loadVersion;const staging=document.createElement('div');ownCard(staging).then(()=>{if(loadVersion===cardVersion&&!sample&&state.auth.currentUser?.uid===user.uid)holder.replaceChildren(...staging.childNodes)})}el('message').textContent='Your records are loaded. This account is read-only.';
+  render(members[0],payments,attendance,result.ledger);if(members.length===1){const holder=el('membershipCard'),cardVersion=loadVersion;const staging=document.createElement('div');ownCard(staging).then(()=>{if(loadVersion===cardVersion&&!sample&&state.auth.currentUser?.uid===user.uid)holder.replaceChildren(...staging.childNodes)})}el('message').textContent='Your records are loaded. This account is read-only.';
  }catch{if(sample || version !== loadVersion)return;clearAccount();el('message').textContent='Your records could not be loaded. Contact MPU to check your account access, or try refreshing.'}
 }
 el('preview').onclick=()=>{++loadVersion;sample=true;render(sampleMember,samplePayments.slice(),[{meetingDate:'2026-09-20',meetingName:'General meeting — sample',status:'Present'}]);el('message').textContent='Viewing fictional sample records.'};
@@ -79,3 +79,5 @@ async function init(){
  }catch{el('sendLink').disabled=true;el('message').textContent='Live member access is unavailable. You can still view the sample account.'}
 }
 init();
+
+function renderLedger(ledger){const holder=el('ledgerBreakdown');holder.replaceChildren();const title=document.createElement('h2');title.textContent='Charges, payments and outstanding balance';holder.append(title);if(!ledger?.active){const p=document.createElement('p');p.textContent='Finance has not activated a reconciled ledger yet. Your dated balance snapshot remains displayed.';holder.append(p);return}const t=document.createElement('table');t.className='table';for(const values of [['Charge','Year','Due date','Expected after adjustments','Applied','Remaining'],...ledger.rows.map(r=>[r.name,r.year||'Opening',r.dueDate||'',money(r.netChargeCents/100),money(r.appliedCents/100),money(r.outstandingCents/100)])]){const row=document.createElement('tr');for(const value of values){const cell=document.createElement('td');cell.textContent=value;row.append(cell)}t.append(row)}const wrap=document.createElement('div');wrap.className='table-wrap';wrap.append(t);holder.append(wrap);if(ledger.issues.length){const p=document.createElement('p');p.textContent='Needs review: '+ledger.issues.join('; ');holder.append(p)}}

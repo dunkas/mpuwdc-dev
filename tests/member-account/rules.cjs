@@ -81,5 +81,6 @@ const fixtures=require('./fixtures.cjs');
  await pass('Delivery bearer links cannot be read directly',()=>assertFails(getDoc(doc(admin,'notificationsQueue','secret-link'))));
  await pass('Disabled Finance role cannot read staff payments',()=>assertFails(getDocs(collection(env.authenticatedContext('disabled-finance',{email:'disabled@example.test',email_verified:true}).firestore(),'payments'))));
  await pass('Public cannot read or mutate secure confirmation tokens',()=>assertFails(setDoc(doc(env.unauthenticatedContext().firestore(),'secureFinanceLinks','fake'),{used:true})));
+ for(const name of ['memberLedgers','memberObligations','ledgerAllocations','ledgerAdjustments','duesSchedules'])await pass('Direct ledger writes denied: '+name,()=>assertFails(setDoc(doc(admin,name,'forged'),{memberId:'test-member-a',amountCents:0,status:'Active'})));
  await env.cleanup();console.log(`${count} checks passed; fictional fixtures retained in the local emulator.`);
 })().catch(e=>{console.error(e);process.exit(1)});

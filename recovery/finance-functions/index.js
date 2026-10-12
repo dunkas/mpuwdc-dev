@@ -69,3 +69,5 @@ exports.financeGovernance=memberCallable(async(db,actor,d)=>{actor.passwordSessi
 exports.staffAccess=memberCallable(async(db,actor,d)=>{actor.passwordSession=await sessions.verify(db,actor,d.session);return require('./staff-service').execute(db,actor,d)});
 exports.memberZelle=memberCallable(platform.memberZelle);
 exports.financePublicLink=memberCallable(platform.publicLink);
+
+exports.financeLedger=memberCallable(async(db,actor,d)=>{actor.passwordSession=await sessions.verify(db,actor,d.session);return require('./ledger-service').execute(db,actor,d)});
